@@ -1,4 +1,4 @@
-library;
+library transform;
 
 export 'src/database/class/transform_database_class.dart';
 export 'src/database/column/transform_database_column.dart';
