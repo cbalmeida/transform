@@ -2,8 +2,7 @@ import 'dart:convert';
 
 import 'package:transform/transform.dart';
 
-import '../../generated/produto/produto.dart';
-import '../../generated/transform.dart';
+import '../../generated/generated.dart';
 
 class ProdutoGetRouteInput extends TransformRouteInput {
   final String id;

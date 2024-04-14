@@ -5,19 +5,27 @@ import '../src/database/postgres.dart';
 import '../src/routes/produto_get.dart';
 
 class Transform extends TransformServer {
-  static Transform? _instance;
-  static Transform get instance => _instance ??= Transform._();
+  Transform._({required super.database, required super.objects, required super.routes});
 
-  Transform._()
-      : super(
-          database: DatabasePostgres.teste(),
-          objects: [
-            ProdutoObject(dataBase: DatabasePostgres.teste()),
-          ],
-          routes: [
-            ProdutoGetRoute(),
-          ],
-        );
+  static Transform? _instance;
+
+  static Transform get instance => _instance ??= newInstance;
+
+  static Transform get newInstance {
+    TransformDatabase dataBase = DatabasePostgres();
+    List<TransformObject> objects = [
+      ProdutoObject(dataBase: dataBase),
+    ];
+    List<TransformRoute> routes = [
+      ProdutoGetRoute(),
+    ];
+
+    return Transform._(
+      database: dataBase,
+      objects: objects,
+      routes: routes,
+    );
+  }
 
   ProdutoObject get produto => get<ProdutoObject>();
 }

@@ -2,7 +2,7 @@ part of '../transform_database.dart';
 
 enum TransformDatabasePostgresSslMode { disable, require, verifyFull }
 
-class TransformDatabasePostgres extends TransformDatabase {
+class TransformDatabasePostgresParams {
   final String host;
   final int port;
   final String database;
@@ -10,16 +10,9 @@ class TransformDatabasePostgres extends TransformDatabase {
   final String? password;
   final TransformDatabasePostgresSslMode? sslMode;
 
-  TransformDatabasePostgres({
-    required this.host,
-    required this.port,
-    required this.database,
-    required this.username,
-    required this.password,
-    required this.sslMode,
-  });
+  TransformDatabasePostgresParams({required this.host, required this.port, required this.database, required this.username, required this.password, required this.sslMode});
 
-  TransformDatabasePostgres fromEnvironment() {
+  factory TransformDatabasePostgresParams.fromEnvironment() {
     String host = const String.fromEnvironment('POSTGRES_HOST', defaultValue: 'localhost');
     int port = const int.fromEnvironment('POSTGRES_PORT', defaultValue: 5432);
     String database = const String.fromEnvironment('POSTGRES_DATABASE', defaultValue: 'postgres');
@@ -37,7 +30,7 @@ class TransformDatabasePostgres extends TransformDatabase {
       default:
         sslMode = null;
     }
-    return TransformDatabasePostgres(
+    return TransformDatabasePostgresParams(
       host: host,
       port: port,
       database: database,
@@ -47,8 +40,7 @@ class TransformDatabasePostgres extends TransformDatabase {
     );
   }
 
-  Future<TransformDatabasePostgres> fromJsonFile(String filePath) async {
-    Map<String, dynamic> map = jsonDecode(await File(filePath).readAsString());
+  factory TransformDatabasePostgresParams.fromMap(Map<String, dynamic> map) {
     String host = Util.stringFromMapNotNull(map, 'POSTGRES_HOST', 'localhost');
     int port = Util.intFromMapNotNull(map, 'POSTGRES_PORT', 5432);
     String database = Util.stringFromMapNotNull(map, 'POSTGRES_DATABASE', 'postgres');
@@ -66,7 +58,7 @@ class TransformDatabasePostgres extends TransformDatabase {
       default:
         sslMode = null;
     }
-    return TransformDatabasePostgres(
+    return TransformDatabasePostgresParams(
       host: host,
       port: port,
       database: database,
@@ -75,13 +67,18 @@ class TransformDatabasePostgres extends TransformDatabase {
       sslMode: sslMode,
     );
   }
+}
+
+class TransformDatabasePostgres extends TransformDatabase {
+  final TransformDatabasePostgresParams params;
+  TransformDatabasePostgres({required this.params});
 
   postgres.Endpoint? _endPoint;
-  postgres.Endpoint get endPoint => _endPoint ??= postgres.Endpoint(host: host, port: port, database: database, username: username, password: password);
+  postgres.Endpoint get endPoint => _endPoint ??= postgres.Endpoint(host: params.host, port: params.port, database: params.database, username: params.username, password: params.password);
 
-  postgres.SslMode get postgresSslMode => sslMode == TransformDatabasePostgresSslMode.disable
+  postgres.SslMode get postgresSslMode => params.sslMode == TransformDatabasePostgresSslMode.disable
       ? postgres.SslMode.disable
-      : sslMode == TransformDatabasePostgresSslMode.require
+      : params.sslMode == TransformDatabasePostgresSslMode.require
           ? postgres.SslMode.require
           : postgres.SslMode.verifyFull;
 
