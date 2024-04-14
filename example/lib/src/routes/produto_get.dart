@@ -1,12 +1,10 @@
-import 'dart:convert';
-
 import 'package:transform/transform.dart';
 
 import '../../generated/generated.dart';
 
 class ProdutoGetRouteInput extends TransformRouteInput {
   final String id;
-  ProdutoGetRouteInput({required this.id});
+  const ProdutoGetRouteInput({required this.id});
 
   factory ProdutoGetRouteInput.fromMap(Map<String, dynamic> map) {
     return ProdutoGetRouteInput(id: map["id"]);
@@ -16,19 +14,19 @@ class ProdutoGetRouteInput extends TransformRouteInput {
 class ProdutoGetRouteOutput extends TransformRouteOutput {
   final String id;
   final String nome;
-  ProdutoGetRouteOutput({required this.id, required this.nome});
+  const ProdutoGetRouteOutput({required this.id, required this.nome});
 
   @override
-  String toJson() {
-    Map<String, dynamic> map = {
-      "id": id,
-      "nome": nome,
-    };
-    return jsonEncode(map);
-  }
+  Map<String, dynamic> toMap() => {
+        "id": id,
+        "nome": nome,
+      };
 }
 
 class ProdutoGetRouteHandler extends TransformRouteHandler<ProdutoGetRouteInput, ProdutoGetRouteOutput> {
+  @override
+  ProdutoGetRouteInput inputFromParams(Map<String, dynamic> params) => ProdutoGetRouteInput.fromMap(params);
+
   @override
   Future<TransformRouteResponse<ProdutoGetRouteOutput>> execute(ProdutoGetRouteInput input) async {
     Produto? produto = await Transform.instance.produto.findUnique(where: {"id": input.id});
@@ -40,9 +38,6 @@ class ProdutoGetRouteHandler extends TransformRouteHandler<ProdutoGetRouteInput,
     ProdutoGetRouteOutput output = ProdutoGetRouteOutput(id: produto.id, nome: produto.nome);
     return TransformRouteResponse.ok(output);
   }
-
-  @override
-  ProdutoGetRouteInput inputFromValues(Map<String, dynamic> values) => ProdutoGetRouteInput.fromMap(values);
 }
 
 class ProdutoGetRoute extends TransformRoute<ProdutoGetRouteInput, ProdutoGetRouteOutput> {

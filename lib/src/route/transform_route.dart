@@ -15,7 +15,7 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
   final String path;
   final TransformRouteHandler<I, O> handler;
 
-  TransformRoute({
+  const TransformRoute({
     required this.method,
     required this.path,
     required this.handler,
@@ -23,8 +23,12 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
 
   Future<Response> _handleRequest(Request request) async {
     try {
-      final Map<String, dynamic> values = jsonDecode(await request.readAsString());
-      final I input = handler.inputFromValues(values);
+      final Map<String, dynamic> urlParams = request.params;
+      final Map<String, dynamic> queryParams = request.url.queryParameters;
+      final Map<String, dynamic> bodyParams = jsonDecode(await request.readAsString()) ?? {};
+      final Map<String, dynamic> params = {...urlParams, ...queryParams, ...bodyParams};
+
+      final I input = handler.inputFromParams(params);
       final response = await handler.execute(input);
       return response.toResponse();
     } catch (e) {

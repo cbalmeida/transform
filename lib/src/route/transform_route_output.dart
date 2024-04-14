@@ -1,7 +1,9 @@
 part of 'transform_route.dart';
 
 abstract class TransformRouteOutput {
-  TransformRouteOutput();
+  const TransformRouteOutput();
 
-  String toJson();
+  Map<String, dynamic> toMap();
+
+  String toJson() => jsonEncode(toMap());
 }
