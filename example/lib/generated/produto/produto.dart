@@ -1,6 +1,5 @@
+import 'package:testeexemplo/src/models/produto.dart';
 import 'package:transform/transform.dart';
-
-import '../../models/produto.dart';
 
 class Produto extends TransformMapped {
   Produto({required super.values});

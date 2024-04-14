@@ -1,13 +1,16 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:postgres/postgres.dart' as postgres;
 
-import '../../../transform.dart';
+import '../../transform.dart';
 
-part 'transform_database_class_postgres.dart';
+part 'types/transform_database_postgres.dart';
 
-enum TransformDatabaseClassType { postgres, mysql }
+enum TransformDatabaseType { postgres, mysql }
 
-abstract class TransformDatabaseClass {
-  TransformDatabaseClassType get type;
+abstract class TransformDatabase {
+  TransformDatabaseType get type;
 
   Future<List<Map<String, dynamic>>> execute(String query, {Map<String, dynamic>? parameters});
 

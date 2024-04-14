@@ -1,4 +1,4 @@
-import '../../../transform.dart';
+import '../../transform.dart';
 
 class TransformDatabaseColumn {
   final String name;
@@ -16,14 +16,20 @@ class TransformDatabaseColumn {
     this.isPrimaryKey = false,
     this.isUnique = false,
   }) {
-    assert(name.isNotEmpty);
+    _assertConstructor();
   }
 
-  String asSql(TransformDatabaseClass database) {
+  _assertConstructor() {
+    assert(name.isNotEmpty);
+    if (isPrimaryKey) assert(!isNullable);
+    if (isUnique) assert(!isNullable);
+  }
+
+  String asSql(TransformDatabase database) {
     return "$name ${type.asSql(database)} ${isNullable ? 'null' : 'not null'} ${defaultValue != null ? 'default ${_defaultValueSql(database)}' : ''}";
   }
 
-  String _defaultValueSql(TransformDatabaseClass database) {
+  String _defaultValueSql(TransformDatabase database) {
     if (defaultValue == null) return '';
     if (defaultValue is String) return "'$defaultValue'";
     if (defaultValue is bool) return defaultValue ? 'true' : 'false';

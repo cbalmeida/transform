@@ -1,7 +1,7 @@
 import '../../transform.dart';
 
 class TransformObject<S extends TransformMapped> {
-  final TransformDatabaseClass dataBase;
+  final TransformDatabase dataBase;
   final TransformModel model;
   final TransformModelAdapter<S> adapter;
 
