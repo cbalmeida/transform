@@ -10,6 +10,18 @@ class TransformWebServerParams {
   final int port;
 
   TransformWebServerParams({required this.host, required this.port});
+
+  factory TransformWebServerParams.fromEnvironment() {
+    String host = const String.fromEnvironment('WEBSERVER_HOST', defaultValue: 'localhost');
+    int port = const int.fromEnvironment('WEBSERVER_PORT', defaultValue: 8080);
+    return TransformWebServerParams(host: host, port: port);
+  }
+
+  factory TransformWebServerParams.fromMap(Map<String, dynamic> map) {
+    String host = Util.stringFromMapNotNull(map, 'WEBSERVER_HOST', 'localhost');
+    int port = Util.intFromMapNotNull(map, 'WEBSERVER_PORT', 8080);
+    return TransformWebServerParams(host: host, port: port);
+  }
 }
 
 abstract class TransformWebServer {
