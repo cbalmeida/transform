@@ -7,9 +7,9 @@ abstract class TransformRouteResponse<O extends TransformRouteOutput> {
 
   static TransformRouteResponse<O> ok<O extends TransformRouteOutput>(O output) => TransformRouteResponseOK(output: output);
 
-  static TransformRouteResponse<O> notFound<O extends TransformRouteOutput>(Object? object) => TransformRouteResponseNotFound(object: object);
+  static TransformRouteResponse<O> notFound<O extends TransformRouteOutput>(String? message) => TransformRouteResponseNotFound(message: message);
 
-  static TransformRouteResponse<O> badRequest<O extends TransformRouteOutput>() => TransformRouteResponseBadRequest();
+  static TransformRouteResponse<O> badRequest<O extends TransformRouteOutput>(String? message) => TransformRouteResponseBadRequest(message: message);
 
   static TransformRouteResponse<O> internalServerError<O extends TransformRouteOutput>(Exception exception) => TransformRouteResponseInternalServerError(exception: exception);
 }
@@ -23,18 +23,19 @@ class TransformRouteResponseOK<O extends TransformRouteOutput> extends Transform
 }
 
 class TransformRouteResponseNotFound<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
-  final Object? object;
-  const TransformRouteResponseNotFound({required this.object});
+  final String? message;
+  const TransformRouteResponseNotFound({required this.message});
 
   @override
-  Response toResponse() => Response.notFound(object);
+  Response toResponse() => Response.notFound({"error": message}.toString());
 }
 
 class TransformRouteResponseBadRequest<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
-  const TransformRouteResponseBadRequest();
+  final String? message;
+  const TransformRouteResponseBadRequest({required this.message});
 
   @override
-  Response toResponse() => Response.badRequest();
+  Response toResponse() => Response.badRequest(body: message);
 }
 
 class TransformRouteResponseInternalServerError<O extends TransformRouteOutput> extends TransformRouteResponse<O> {

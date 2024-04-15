@@ -11,21 +11,19 @@ abstract class TransformDatabase {
 
   Future<TransformEither<Exception, bool>> start() async {
     try {
-      Util.log("Starting Database layer ...");
-
       Util.log("  Checking Database connection...");
-      await checkDatabaseConnection();
+      TransformEither<Exception, bool> resultCheckDatabaseConnection = await checkDatabaseConnection();
+      if (resultCheckDatabaseConnection.isLeft) throw resultCheckDatabaseConnection.left;
 
       Util.log("  Creating/updating tables structures...");
       for (TransformDatabaseTable table in tables) {
-        await createTable(table);
-        Util.log("  Table '${table.name}' created/updated.");
+        Util.log("    '${table.name}'.");
+        TransformEither<Exception, bool> resultCreateTable = await createTable(table);
+        if (resultCreateTable.isLeft) throw resultCreateTable.left;
       }
-
-      Util.log("Database layer started.");
       return Right(true);
     } on Exception catch (e) {
-      return Left(e);
+      return Left(Exception("Error starting Database layer:\n$e"));
     }
   }
 
@@ -42,6 +40,8 @@ abstract class TransformDatabase {
   Future<TransformEither<Exception, bool>> tableExists(TransformDatabaseTable table);
 
   Future<TransformEither<Exception, bool>> columnExists(TransformDatabaseTable table, TransformDatabaseColumn column);
+
+  Future<TransformEither<Exception, bool>> primaryKeyExists(TransformDatabaseTable table);
 
   Future<TransformEither<Exception, bool>> createTable(TransformDatabaseTable table);
 

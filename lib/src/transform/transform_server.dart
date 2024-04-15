@@ -1,14 +1,14 @@
 import '../../transform.dart';
 
 class TransformServer {
+  final TransformWebServer webserver;
   final TransformDatabase database;
   final List<TransformObject> objects;
-  final List<TransformRoute> routes;
 
   TransformServer({
+    required this.webserver,
     required this.database,
     required this.objects,
-    required this.routes,
   });
 
   late final Map<Type, TransformObject> _objectsMap = Map.fromEntries(objects.map((e) => MapEntry(e.runtimeType, e)));

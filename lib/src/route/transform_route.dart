@@ -8,51 +8,66 @@ part 'transform_route_input.dart';
 part 'transform_route_output.dart';
 part 'transform_route_response.dart';
 
-enum TransformRouteMethod { get, post, put, delete, patch }
+enum TransformRouteMethod {
+  get,
+  post,
+  put,
+  delete,
+  patch;
+
+  @override
+  String toString() {
+    switch (this) {
+      case TransformRouteMethod.get:
+        return "GET";
+      case TransformRouteMethod.post:
+        return "POST";
+      case TransformRouteMethod.put:
+        return "PUT";
+      case TransformRouteMethod.delete:
+        return "DELETE";
+      case TransformRouteMethod.patch:
+        return "PATCH";
+    }
+  }
+}
 
 abstract class TransformRoute<I extends TransformRouteInput, O extends TransformRouteOutput> {
   final TransformRouteMethod method;
   final String path;
   final TransformRouteHandler<I, O> handler;
 
-  const TransformRoute({
+  TransformRoute({
     required this.method,
     required this.path,
     required this.handler,
   });
 
+  Future<Map<String, dynamic>> _bodyParams(Request request) async {
+    try {
+      String body = await request.readAsString();
+      if (body.isEmpty) return Future.value({});
+      return Future.value(jsonDecode(body));
+    } catch (e) {
+      return Future.value({});
+    }
+  }
+
   Future<Response> _handleRequest(Request request) async {
     try {
       final Map<String, dynamic> urlParams = request.params;
       final Map<String, dynamic> queryParams = request.url.queryParameters;
-      final Map<String, dynamic> bodyParams = jsonDecode(await request.readAsString()) ?? {};
+      final Map<String, dynamic> bodyParams = await _bodyParams(request);
       final Map<String, dynamic> params = {...urlParams, ...queryParams, ...bodyParams};
 
       final I input = handler.inputFromParams(params);
-      final response = await handler.execute(input);
-      return response.toResponse();
+      final routeResponse = await handler.execute(input);
+      Response response = routeResponse.toResponse();
+      return response;
     } catch (e) {
       return Response.internalServerError(body: e.toString());
     }
   }
 
-  addToRouter(Router router) {
-    switch (method) {
-      case TransformRouteMethod.get:
-        router.get(path, (Request request) => _handleRequest(request));
-        break;
-      case TransformRouteMethod.post:
-        router.post(path, (Request request) => _handleRequest(request));
-        break;
-      case TransformRouteMethod.put:
-        router.put(path, (Request request) => _handleRequest(request));
-        break;
-      case TransformRouteMethod.delete:
-        router.delete(path, (Request request) => _handleRequest(request));
-        break;
-      case TransformRouteMethod.patch:
-        router.patch(path, (Request request) => _handleRequest(request));
-        break;
-    }
-  }
+  addToRouter(Router router) => router.add(method.toString(), path, _handleRequest);
 }

@@ -1,5 +1,6 @@
 library transform;
 
+export 'src/api/transform_api.dart';
 export 'src/database/transform_database.dart';
 export 'src/database/transform_database_column.dart';
 export 'src/database/transform_database_column_type.dart';
@@ -20,3 +21,4 @@ export 'src/util/int_util.dart';
 export 'src/util/log_util.dart';
 export 'src/util/string_util.dart';
 export 'src/util/util.dart';
+export 'src/webserver/transform_webserver.dart';

@@ -1,9 +1,9 @@
 import 'package:transform/transform.dart';
 
-import '../../generated/generated.dart';
+import '../../../../../generated/generated.dart';
 
 class ProdutoGetRouteInput extends TransformRouteInput {
-  final String id;
+  final String? id;
   const ProdutoGetRouteInput({required this.id});
 
   factory ProdutoGetRouteInput.fromMap(Map<String, dynamic> map) {
@@ -29,15 +29,15 @@ class ProdutoGetRouteHandler extends TransformRouteHandler<ProdutoGetRouteInput,
 
   @override
   Future<TransformRouteResponse<ProdutoGetRouteOutput>> execute(ProdutoGetRouteInput input) async {
+    if (input.id == null) return TransformRouteResponse.badRequest("'id' is required!");
+
     TransformEither<Exception, Produto?> result = await Transform.instance.produto.findUnique(where: {"id": input.id});
 
     if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);
     Produto? produto = result.right;
 
-    // se nao encontrar o produto, retorna 404 Not Found
-    if (produto == null) return TransformRouteResponse.notFound({"id": input.id});
+    if (produto == null) return TransformRouteResponse.notFound("id ${input.id} not found!");
 
-    // se encontrar o produto, retorna 200 OK
     ProdutoGetRouteOutput output = ProdutoGetRouteOutput(id: produto.id, nome: produto.nome);
     return TransformRouteResponse.ok(output);
   }
@@ -47,7 +47,7 @@ class ProdutoGetRoute extends TransformRoute<ProdutoGetRouteInput, ProdutoGetRou
   ProdutoGetRoute()
       : super(
           method: TransformRouteMethod.get,
-          path: '/produto',
+          path: '/produto/<id>',
           handler: ProdutoGetRouteHandler(),
         );
 }

@@ -7,7 +7,6 @@ class TransformObject<S extends TransformMapped> {
 
   TransformObject({required this.dataBase, required this.model, required this.adapter}) {
     dataBase.registerTable(model.databaseTable);
-    Util.log("  Object '${model.name}' created.");
   }
 
   Future<TransformEither<Exception, S?>> findUnique({required Map<String, dynamic> where}) async {

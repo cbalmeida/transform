@@ -1,11 +1,11 @@
-import 'package:testeexemplo/generated/produto/produto.dart';
+import 'package:testeexemplo/src/webserver/webserver.dart';
 import 'package:transform/transform.dart';
 
 import '../src/database/postgres.dart';
-import '../src/routes/produto_get.dart';
+import 'generated.dart';
 
 class Transform extends TransformServer {
-  Transform._({required super.database, required super.objects, required super.routes});
+  Transform._({required super.database, required super.webserver, required super.objects});
 
   static Transform? _instance;
 
@@ -18,39 +18,30 @@ class Transform extends TransformServer {
 
   static Future<void> start() async {
     try {
-      Util.log("Starting server...");
-
-      Util.log("Creating Server instance...");
       _instance = _newInstance;
 
-      await instance.database.start();
+      Util.log("============ Database ============");
+      TransformEither<Exception, bool> databaseStartResult = await instance.database.start();
+      if (databaseStartResult.isLeft) throw databaseStartResult.left;
 
-      Util.log("Server started!");
+      Util.log("============ Webserver ============");
+      TransformEither<Exception, bool> webServerStartResult = await instance.webserver.start();
+      if (webServerStartResult.isLeft) throw webServerStartResult.left;
+
+      Util.log("============ Server ============");
+      Util.log("Server initialization completed!");
+
       // await instance.database.connect();
     } catch (e) {
-      Util.logError("Error starting server: $e");
+      Util.logError("Error starting server:\n$e");
     }
   }
 
   static Transform get _newInstance {
-    Util.log("Creating database instance...");
     TransformDatabase dataBase = DatabasePostgres();
-    Util.log("Database instance created: ${dataBase.type}.");
-
-    Util.log("Creating objects instances...");
-    List<TransformObject> objects = [
-      ProdutoObject(dataBase: dataBase),
-    ];
-
-    List<TransformRoute> routes = [
-      ProdutoGetRoute(),
-    ];
-
-    return Transform._(
-      database: dataBase,
-      objects: objects,
-      routes: routes,
-    );
+    TransformWebServer webServer = WebServer();
+    List<TransformObject> objects = Objects.all(dataBase);
+    return Transform._(webserver: webServer, database: dataBase, objects: objects);
   }
 
   ProdutoObject get produto => get<ProdutoObject>();
