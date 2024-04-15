@@ -92,90 +92,127 @@ class TransformDatabasePostgres extends TransformDatabase {
   TransformDatabaseType get type => TransformDatabaseType.postgres;
 
   @override
-  Future<List<Map<String, dynamic>>> execute(String query, {Map<String, dynamic>? parameters}) async {
-    final conn = await connection();
-    final result = await conn.execute(query, parameters: parameters);
-    return result.map((row) => row.toColumnMap()).toList();
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> execute(String query, {Map<String, dynamic>? parameters}) async {
+    try {
+      final conn = await connection();
+      final result = await conn.execute(query, parameters: parameters);
+      List<Map<String, dynamic>> list = result.map((row) => row.toColumnMap()).toList();
+      return Right(list);
+    } on Exception catch (e) {
+      return Left(e);
+    }
   }
 
   @override
-  Future<bool> tableExists(TransformDatabaseTable table) async {
-    String query = "select table_name from information_schema.tables where table_schema = lower(@schema_name) and table_name = lower(@table_name) limit 1";
-    Map<String, dynamic> parameters = {"schema_name": table.schema, "table_name": table.name};
-    List<Map<String, dynamic>> result = await execute(query, parameters: parameters);
-    return result.isNotEmpty;
+  Future<TransformEither<Exception, bool>> checkDatabaseConnection() async {
+    try {
+      String query = "select 1 as result";
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query);
+      return result.fold((l) => Left(l), (r) => Right(true));
+    } on Exception catch (e) {
+      return Left(e);
+    }
   }
 
   @override
-  Future<bool> columnExists(TransformDatabaseTable table, TransformDatabaseColumn column) async {
-    String query = "select column_name from information_schema.columns where table_schema = lower(@schema_name) and table_name = lower(@table_name) and column_name = lower(@column_name) limit 1";
-    Map<String, dynamic> parameters = {"schema_name": table.schema, "table_name": table.name, "column_name": column.name};
-    List<Map<String, dynamic>> result = await execute(query, parameters: parameters);
-    return result.isNotEmpty;
+  Future<TransformEither<Exception, bool>> tableExists(TransformDatabaseTable table) async {
+    try {
+      String query = "select table_name from information_schema.tables where table_schema = lower(@schema_name) and table_name = lower(@table_name) limit 1";
+      Map<String, dynamic> parameters = {"schema_name": table.schema, "table_name": table.name};
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query, parameters: parameters);
+      return result.fold((l) => Left(l), (r) => Right(r.isNotEmpty));
+    } on Exception catch (e) {
+      return Left(e);
+    }
   }
 
   @override
-  Future<bool> createTable(TransformDatabaseTable table) async {
-    String query = "create table ${table.schema}.${table.name} if not exists (";
-    query += table.columns.first.asSql(this);
-    query += ")";
-    await execute(query);
+  Future<TransformEither<Exception, bool>> columnExists(TransformDatabaseTable table, TransformDatabaseColumn column) async {
+    try {
+      String query = "select column_name from information_schema.columns where table_schema = lower(@schema_name) and table_name = lower(@table_name) and column_name = lower(@column_name) limit 1";
+      Map<String, dynamic> parameters = {"schema_name": table.schema, "table_name": table.name, "column_name": column.name};
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query, parameters: parameters);
+      return result.fold((l) => Left(l), (r) => Right(r.isNotEmpty));
+    } on Exception catch (e) {
+      return Left(e);
+    }
+  }
 
-    // columns
-    for (int i = 1; i < table.columns.length; i++) {
-      query = "alter table ${table.schema}.${table.name} add column if not exists ${table.columns[i].asSql(this)}";
+  @override
+  Future<TransformEither<Exception, bool>> createTable(TransformDatabaseTable table) async {
+    try {
+      // table
+      String query = "create table ${table.schema}.${table.name} if not exists (";
+      query += table.columns.first.asSql(this);
+      query += ")";
       await execute(query);
-    }
 
-    // primary key
-    String primaryKeyColumns = table.columns.where((column) => column.isPrimaryKey).map((column) => column.name).join(", ");
-    if (primaryKeyColumns.isNotEmpty) {
-      query = "alter table ${table.schema}.${table.name} add primary key if not exists ($primaryKeyColumns)";
-      await execute(query);
-    }
+      // columns
+      for (int i = 1; i < table.columns.length; i++) {
+        query = "alter table ${table.schema}.${table.name} add column if not exists ${table.columns[i].asSql(this)}";
+        await execute(query);
+      }
 
-    // indexes
-    for (TransformDatabaseIndex index in table.indexes) {
-      String indexColumns = index.columnNames.join(", ");
-      query = "create ${index.isUnique ? "unique" : ""} index if not exists ${index.name} on ${table.schema}.${table.name} ($indexColumns)";
-      await execute(query);
-    }
+      // primary key
+      String primaryKeyColumns = table.columns.where((column) => column.isPrimaryKey).map((column) => column.name).join(", ");
+      if (primaryKeyColumns.isNotEmpty) {
+        query = "alter table ${table.schema}.${table.name} add primary key if not exists ($primaryKeyColumns)";
+        await execute(query);
+      }
 
-    return true;
+      // indexes
+      for (TransformDatabaseIndex index in table.indexes) {
+        String indexColumns = index.columnNames.join(", ");
+        query = "create ${index.isUnique ? "unique" : ""} index if not exists ${index.name} on ${table.schema}.${table.name} ($indexColumns)";
+        await execute(query);
+      }
+
+      return Right(true);
+    } on Exception catch (e) {
+      return Left(e);
+    }
   }
 
   @override
-  Future<Map<String, dynamic>?> findUnique(TransformDatabaseTable table, {required Map<String, dynamic> where}) async {
-    String query = "";
-    query += " select * ";
-    query += "\n from ${table.schema}.${table.name} ";
-    query += "\n where ";
-    query += where.keys.map((key) => "($key = @${key}_value)").join(" and ");
-    Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
-    query += "\n limit 1 ";
-    List<Map<String, dynamic>> result = await execute(query, parameters: parameters);
-    return result.isNotEmpty ? result.first : null;
+  Future<TransformEither<Exception, Map<String, dynamic>?>> findUnique(TransformDatabaseTable table, {required Map<String, dynamic> where}) async {
+    try {
+      String query = "";
+      query += " select * ";
+      query += "\n from ${table.schema}.${table.name} ";
+      query += "\n where ";
+      query += where.keys.map((key) => "($key = @${key}_value)").join(" and ");
+      Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
+      query += "\n limit 1 ";
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query, parameters: parameters);
+      return result.fold((l) => Left(l), (r) => Right(r.isNotEmpty ? r.first : null));
+    } on Exception catch (e) {
+      return Left(e);
+    }
   }
 
   @override
-  Future<List<Map<String, dynamic>>> findMany(TransformDatabaseTable table, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset}) async {
-    String query = "";
-    query += " select * ";
-    query += "\n from ${table.schema}.${table.name} ";
-    query += "\n where ";
-    query += where.keys.map((key) => "    ($key = @${key}_value) ").join("    and ");
-    Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
-    if (orderBy != null) {
-      query += "\n order by ";
-      query += orderBy.keys.map((key) => "$key ${orderBy[key]} ").join(", ");
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> findMany(TransformDatabaseTable table, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset}) async {
+    try {
+      String query = "";
+      query += " select * ";
+      query += "\n from ${table.schema}.${table.name} ";
+      query += "\n where ";
+      query += where.keys.map((key) => "    ($key = @${key}_value) ").join("    and ");
+      Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
+      if (orderBy != null) {
+        query += "\n order by ";
+        query += orderBy.keys.map((key) => "$key ${orderBy[key]} ").join(", ");
+      }
+      if (limit != null) {
+        query += "\n limit $limit ";
+      }
+      if (offset != null) {
+        query += "\n offset $offset ";
+      }
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query, parameters: parameters);
+      return result.fold((l) => Left(l), (r) => Right(r));
+    } on Exception catch (e) {
+      return Left(e);
     }
-    if (limit != null) {
-      query += "\n limit $limit ";
-    }
-    if (offset != null) {
-      query += "\n offset $offset ";
-    }
-    List<Map<String, dynamic>> result = await execute(query, parameters: parameters);
-    return result;
   }
 }

@@ -9,13 +9,39 @@ class Transform extends TransformServer {
 
   static Transform? _instance;
 
-  static Transform get instance => _instance ??= newInstance;
+  static Transform get instance {
+    if (_instance == null) {
+      throw Exception("Server not started!");
+    }
+    return _instance!;
+  }
 
-  static Transform get newInstance {
+  static Future<void> start() async {
+    try {
+      Util.log("Starting server...");
+
+      Util.log("Creating Server instance...");
+      _instance = _newInstance;
+
+      await instance.database.start();
+
+      Util.log("Server started!");
+      // await instance.database.connect();
+    } catch (e) {
+      Util.logError("Error starting server: $e");
+    }
+  }
+
+  static Transform get _newInstance {
+    Util.log("Creating database instance...");
     TransformDatabase dataBase = DatabasePostgres();
+    Util.log("Database instance created: ${dataBase.type}.");
+
+    Util.log("Creating objects instances...");
     List<TransformObject> objects = [
       ProdutoObject(dataBase: dataBase),
     ];
+
     List<TransformRoute> routes = [
       ProdutoGetRoute(),
     ];

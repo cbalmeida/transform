@@ -10,6 +10,8 @@ abstract class TransformRouteResponse<O extends TransformRouteOutput> {
   static TransformRouteResponse<O> notFound<O extends TransformRouteOutput>(Object? object) => TransformRouteResponseNotFound(object: object);
 
   static TransformRouteResponse<O> badRequest<O extends TransformRouteOutput>() => TransformRouteResponseBadRequest();
+
+  static TransformRouteResponse<O> internalServerError<O extends TransformRouteOutput>(Exception exception) => TransformRouteResponseInternalServerError(exception: exception);
 }
 
 class TransformRouteResponseOK<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
@@ -33,4 +35,12 @@ class TransformRouteResponseBadRequest<O extends TransformRouteOutput> extends T
 
   @override
   Response toResponse() => Response.badRequest();
+}
+
+class TransformRouteResponseInternalServerError<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
+  final Exception exception;
+  const TransformRouteResponseInternalServerError({required this.exception});
+
+  @override
+  Response toResponse() => Response.internalServerError(body: exception.toString());
 }

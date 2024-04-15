@@ -12,4 +12,12 @@ class Util {
   static double? doubleFromMap(Map<String, dynamic> map, String key) => DoubleUtil.decode(map[key]);
 
   static double doubleFromMapNotNull(Map<String, dynamic> map, String key, double defaultValue) => DoubleUtil.decodeNotNull(map[key], defaultValue);
+
+  static void logDebug(String message, {DateTime? time, Object? error, StackTrace? stackTrace}) => LogUtil.d(message, time: time, error: error, stackTrace: stackTrace);
+
+  static void logInfo(String message, {DateTime? time, Object? error, StackTrace? stackTrace}) => LogUtil.i(message, time: time, error: error, stackTrace: stackTrace);
+
+  static void logError(String message, {DateTime? time, Object? error, StackTrace? stackTrace}) => LogUtil.e(message, time: time, error: error, stackTrace: stackTrace);
+
+  static void log(String message, {DateTime? time, Object? error, StackTrace? stackTrace}) => LogUtil.log(message);
 }

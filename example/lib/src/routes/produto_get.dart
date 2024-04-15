@@ -29,7 +29,10 @@ class ProdutoGetRouteHandler extends TransformRouteHandler<ProdutoGetRouteInput,
 
   @override
   Future<TransformRouteResponse<ProdutoGetRouteOutput>> execute(ProdutoGetRouteInput input) async {
-    Produto? produto = await Transform.instance.produto.findUnique(where: {"id": input.id});
+    TransformEither<Exception, Produto?> result = await Transform.instance.produto.findUnique(where: {"id": input.id});
+
+    if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);
+    Produto? produto = result.right;
 
     // se nao encontrar o produto, retorna 404 Not Found
     if (produto == null) return TransformRouteResponse.notFound({"id": input.id});

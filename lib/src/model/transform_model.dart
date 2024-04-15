@@ -15,19 +15,20 @@ abstract class TransformModel {
     assert(schema.isNotEmpty);
     assert(columns.isNotEmpty);
 
+    Map<String, TransformModelColumn> columnsMap = {};
     for (TransformModelColumn column in columns) {
-      if (columns.any((c) => c != column && c.name == column.name)) {
+      if (columnsMap.containsKey(column.name)) {
         throw Exception("Duplicated column name: ${column.name}");
       }
+      columnsMap[column.name] = column;
     }
 
+    Map<String, TransformModelIndex> indexesMap = {};
     for (TransformModelIndex index in indexes) {
-      if (indexes.any((i) => i != index && i.name == index.name)) {
+      if (indexesMap.containsKey(index.name)) {
         throw Exception("Duplicated index name: ${index.name}");
       }
-      for (String columnName in index.columnNames) {
-        assert(columns.any((column) => column.name == columnName));
-      }
+      indexesMap[index.name] = index;
     }
   }
 

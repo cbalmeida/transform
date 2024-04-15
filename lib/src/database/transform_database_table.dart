@@ -36,11 +36,11 @@ class TransformDatabaseTable {
     }
   }
 
-  Future<bool> exists(TransformDatabase database) => database.tableExists(this);
+  Future<TransformEither<Exception, bool>> exists(TransformDatabase database) => database.tableExists(this);
 
-  Future<bool> create(TransformDatabase database) => database.createTable(this);
+  Future<TransformEither<Exception, bool>> create(TransformDatabase database) => database.createTable(this);
 
-  Future<Map<String, dynamic>?> findUnique(TransformDatabase dataBase, {required Map<String, dynamic> where}) => dataBase.findUnique(this, where: where);
+  Future<TransformEither<Exception, Map<String, dynamic>?>> findUnique(TransformDatabase dataBase, {required Map<String, dynamic> where}) => dataBase.findUnique(this, where: where);
 
-  Future<List<Map<String, dynamic>>> findMany(TransformDatabase dataBase, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset}) => dataBase.findMany(this, where: where, orderBy: orderBy, limit: limit, offset: offset);
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> findMany(TransformDatabase dataBase, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset}) => dataBase.findMany(this, where: where, orderBy: orderBy, limit: limit, offset: offset);
 }
