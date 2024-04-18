@@ -61,7 +61,7 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
       final Map<String, dynamic> params = {...urlParams, ...queryParams, ...bodyParams};
 
       final I input = handler.inputFromParams(params);
-      final routeResponse = await handler.execute(input);
+      final routeResponse = await handler.handler(input);
       Response response = routeResponse.toResponse();
       return response;
     } catch (e) {

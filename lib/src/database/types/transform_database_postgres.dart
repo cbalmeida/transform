@@ -69,57 +69,31 @@ class TransformDatabasePostgresParams {
   }
 }
 
-abstract class TransformDatabasePostgres extends TransformDatabase {
-  TransformDatabasePostgres();
+class TransformDatabaseSessionPostgres extends TransformDatabaseSession {
+  final postgres.TxSession _session;
 
-  Future<TransformDatabasePostgresParams> get params;
-
-  postgres.Endpoint? _endPoint;
-  Future<postgres.Endpoint> get endPoint async {
-    if (_endPoint == null) {
-      TransformDatabasePostgresParams params = await this.params;
-      _endPoint = postgres.Endpoint(host: params.host, port: params.port, database: params.database, username: params.username, password: params.password);
-    }
-    return _endPoint!;
-  }
-
-  Future<postgres.SslMode> get postgresSslMode async {
-    TransformDatabasePostgresParams params = await this.params;
-    switch (params.sslMode) {
-      case TransformDatabasePostgresSslMode.disable:
-        return postgres.SslMode.disable;
-      case TransformDatabasePostgresSslMode.require:
-        return postgres.SslMode.require;
-      case TransformDatabasePostgresSslMode.verifyFull:
-        return postgres.SslMode.verifyFull;
-      case null:
-        return postgres.SslMode.disable;
-    }
-  }
-
-  postgres.ConnectionSettings? _connectionSettings;
-  Future<postgres.ConnectionSettings> get connectionSettings async {
-    if (_connectionSettings == null) {
-      postgres.SslMode sslMode = await postgresSslMode;
-      _connectionSettings = postgres.ConnectionSettings(sslMode: sslMode);
-    }
-    return _connectionSettings!;
-  }
-
-  postgres.Connection? _connection;
-  Future<postgres.Connection> connection() async => _connection ??= await postgres.Connection.open(await endPoint, settings: await connectionSettings);
+  TransformDatabaseSessionPostgres(this._session);
 
   @override
-  TransformDatabaseType get type => TransformDatabaseType.postgres;
+  TransformDatabaseType get databaseType => TransformDatabaseType.postgres;
+
+  @override
+  bool get isOpen => _session.isOpen;
+
+  @override
+  Future<void> get closed => _session.closed;
+
+  @override
+  Future<void> rollback() => _session.rollback();
 
   @override
   Future<TransformEither<Exception, List<Map<String, dynamic>>>> execute(String query, {Map<String, dynamic>? parameters}) async {
     try {
-      final conn = await connection();
-      final result = await conn.execute(postgres.Sql.named(query), parameters: parameters);
+      final result = await _session.execute(postgres.Sql.named(query), parameters: parameters);
       List<Map<String, dynamic>> list = result.map((row) => row.toColumnMap()).toList();
       return Right(list);
     } on Exception catch (e) {
+      print(e.toString());
       return Left(Exception("Error executing query:\n$query\n$e"));
     }
   }
@@ -128,10 +102,34 @@ abstract class TransformDatabasePostgres extends TransformDatabase {
   Future<TransformEither<Exception, bool>> checkDatabaseConnection() async {
     try {
       String query = "select 1 as result";
-      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query);
+      final result = await execute(query);
       return result.fold((l) => Left(l), (r) => Right(true));
     } on Exception catch (e) {
       return Left(Exception("Error executing checkDatabaseConnection\n$e"));
+    }
+  }
+
+  @override
+  Future<TransformEither<Exception, int>> tableCount(TransformDatabaseTable table) async {
+    try {
+      String query = "select count(*) as count from ${table.schema}.${table.name} ";
+      Map<String, dynamic> parameters = {"schema_name": table.schema, "table_name": table.name};
+      final result = await execute(query, parameters: parameters);
+      return result.fold((l) => Left(l), (r) => Right(r.first["count"] as int));
+    } on Exception catch (e) {
+      return Left(Exception("Error executing tableExists: ${table.name}\n$e"));
+    }
+  }
+
+  @override
+  Future<TransformEither<Exception, bool>> tableHasRows(TransformDatabaseTable table) async {
+    try {
+      String query = "select 1 from ${table.schema}.${table.name} limit 1";
+      Map<String, dynamic> parameters = {"schema_name": table.schema, "table_name": table.name};
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query, parameters: parameters);
+      return result.fold((l) => Left(l), (r) => Right(r.isNotEmpty));
+    } on Exception catch (e) {
+      return Left(Exception("Error executing tableExists: ${table.name}\n$e"));
     }
   }
 
@@ -176,15 +174,14 @@ abstract class TransformDatabasePostgres extends TransformDatabase {
     try {
       // table
       String query = "create table if not exists ${table.schema}.${table.name}  (";
-      query += table.columns.first.asSql(this);
+      query += table.columns.first.asSql(databaseType);
       query += ")";
       final resultExecute = await execute(query);
       if (resultExecute.isLeft) throw resultExecute.left;
 
       // columns
       for (int i = 1; i < table.columns.length; i++) {
-        query = "alter table ${table.schema}.${table.name} add column if not exists ${table.columns[i].asSql(this)}";
-        final resultExecute = await execute(query);
+        final resultExecute = await createColumn(table, table.columns[i]);
         if (resultExecute.isLeft) throw resultExecute.left;
       }
 
@@ -211,6 +208,46 @@ abstract class TransformDatabasePostgres extends TransformDatabase {
       return Right(true);
     } on Exception catch (e) {
       return Left(Exception("Error executing createTable: ${table.name}\n$e"));
+    }
+  }
+
+  @override
+  Future<TransformEither<Exception, bool>> createColumn(TransformDatabaseTable table, TransformDatabaseColumn column) async {
+    try {
+      var resultColumnExists = await columnExists(table, column);
+      if (resultColumnExists.isLeft) throw resultColumnExists.left;
+      if (resultColumnExists.right) return Right(true);
+
+      if (column.isNullable == true) {
+        String query = "alter table ${table.schema}.${table.name} add column if not exists ${column.asSql(databaseType)}";
+        final resultExecute = await execute(query);
+        if (resultExecute.isLeft) throw resultExecute.left;
+        return Right(true);
+      }
+
+      String defaultValue = column.sqlDefaultValue(databaseType);
+
+      String query = "alter table ${table.schema}.${table.name} add column if not exists ${column.asSqlNullable(databaseType)}";
+      var resultExecute = await execute(query);
+      if (resultExecute.isLeft) throw resultExecute.left;
+
+      query = "update ${table.schema}.${table.name} set ${column.name} = $defaultValue";
+      resultExecute = await execute(query);
+      if (resultExecute.isLeft) throw resultExecute.left;
+
+      query = "alter table ${table.schema}.${table.name} alter column ${column.name} set not null";
+      resultExecute = await execute(query);
+      if (resultExecute.isLeft) throw resultExecute.left;
+
+      if (defaultValue != null) {
+        query = "alter table ${table.schema}.${table.name} alter column ${column.name} set default $defaultValue";
+        resultExecute = await execute(query);
+        if (resultExecute.isLeft) throw resultExecute.left;
+      }
+
+      return Right(true);
+    } on Exception catch (e) {
+      return Left(Exception("Error executing createColumn: ${table.name}.${column.name}\n$e"));
     }
   }
 
@@ -254,6 +291,65 @@ abstract class TransformDatabasePostgres extends TransformDatabase {
       return result.fold((l) => Left(l), (r) => Right(r));
     } on Exception catch (e) {
       return Left(Exception("Error executing findMany: ${table.name} ${where.toString()}\n$e"));
+    }
+  }
+}
+
+abstract class TransformDatabasePostgres extends TransformDatabase {
+  TransformDatabasePostgres();
+
+  Future<TransformDatabasePostgresParams> get params;
+
+  postgres.Endpoint? _endPoint;
+  Future<postgres.Endpoint> get endPoint async {
+    if (_endPoint == null) {
+      TransformDatabasePostgresParams params = await this.params;
+      _endPoint = postgres.Endpoint(host: params.host, port: params.port, database: params.database, username: params.username, password: params.password);
+    }
+    return _endPoint!;
+  }
+
+  Future<postgres.SslMode> get postgresSslMode async {
+    TransformDatabasePostgresParams params = await this.params;
+    switch (params.sslMode) {
+      case TransformDatabasePostgresSslMode.disable:
+        return postgres.SslMode.disable;
+      case TransformDatabasePostgresSslMode.require:
+        return postgres.SslMode.require;
+      case TransformDatabasePostgresSslMode.verifyFull:
+        return postgres.SslMode.verifyFull;
+      case null:
+        return postgres.SslMode.disable;
+    }
+  }
+
+  postgres.ConnectionSettings? _connectionSettings;
+  Future<postgres.ConnectionSettings> get connectionSettings async {
+    if (_connectionSettings == null) {
+      postgres.SslMode sslMode = await postgresSslMode;
+      _connectionSettings = postgres.ConnectionSettings(sslMode: sslMode);
+    }
+    return _connectionSettings!;
+  }
+
+  postgres.Connection? _connection;
+  Future<postgres.Connection> connection() async => _connection ??= await postgres.Connection.open(await endPoint, settings: await connectionSettings);
+
+  @override
+  TransformDatabaseType get type => TransformDatabaseType.postgres;
+
+  @override
+  Future<TransformEither<Exception, R>> transaction<R>(Future<TransformEither<Exception, R>> Function(TransformDatabaseSessionPostgres session) body) async {
+    try {
+      final conn = await connection();
+      final result = await conn.runTx<R>((tx) async {
+        final session = TransformDatabaseSessionPostgres(tx);
+        final response = await body(session);
+        return response.fold((l) => throw l, (r) => r);
+      });
+      return Right(result);
+    } on Exception catch (e) {
+      return Left(Exception("Error executing transaction:\n$e"));
     }
   }
 }

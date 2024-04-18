@@ -28,11 +28,17 @@ class ProdutoGetRouteHandler extends TransformRouteHandler<ProdutoGetRouteInput,
   ProdutoGetRouteInput inputFromParams(Map<String, dynamic> params) => ProdutoGetRouteInput.fromMap(params);
 
   @override
-  Future<TransformRouteResponse<ProdutoGetRouteOutput>> execute(ProdutoGetRouteInput input) async {
+  Future<TransformRouteResponse<ProdutoGetRouteOutput>> handler(ProdutoGetRouteInput input) async {
+    // verifica se todos os parametros foram informados
     if (input.id == null) return TransformRouteResponse.badRequest("'id' is required!");
 
-    TransformEither<Exception, Produto?> result = await Transform.instance.produto.findUnique(where: {"id": input.id});
+    // abre uma transacao no banco de dados para efetuar a busca do produto
+    TransformEither<Exception, Produto?> result = await Transform.instance.database.transaction<Produto?>((session) async {
+      TransformEither<Exception, Produto?> result = await Transform.instance.produto.findUnique(session, where: {"id": input.id});
+      return result;
+    });
 
+    //
     if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);
     Produto? produto = result.right;
 

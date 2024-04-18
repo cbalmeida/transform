@@ -1,5 +1,16 @@
 part of 'transform_model_column_type.dart';
 
+/// 1 byte
+class TransformModelColumnTypeBool extends TransformModelColumnType {
+  TransformModelColumnTypeBool();
+
+  @override
+  TransformDatabaseColumnType get databaseColumnType => TransformDatabaseColumnTypeBool();
+
+  @override
+  TransformModelColumnTypeValueType get valueType => TransformModelColumnTypeValueType.bool;
+}
+
 /// 2 bytes	(-32768 to +32767)
 class TransformModelColumnTypeSmallInt extends TransformModelColumnType {
   TransformModelColumnTypeSmallInt();
