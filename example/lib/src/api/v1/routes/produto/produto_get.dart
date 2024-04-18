@@ -34,7 +34,7 @@ class ProdutoGetRouteHandler extends TransformRouteHandler<ProdutoGetRouteInput,
 
     // abre uma transacao no banco de dados para efetuar a busca do produto
     TransformEither<Exception, Produto?> result = await Transform.instance.database.transaction<Produto?>((session) async {
-      TransformEither<Exception, Produto?> result = await Transform.instance.produto.findUnique(session, where: {"id": input.id});
+      TransformEither<Exception, Produto?> result = await Transform.instance.produto.selectObject(session, {"id": input.id});
       return result;
     });
 

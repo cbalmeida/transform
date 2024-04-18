@@ -251,21 +251,43 @@ class TransformDatabaseSessionPostgres extends TransformDatabaseSession {
     }
   }
 
+/*
   @override
-  Future<TransformEither<Exception, Map<String, dynamic>?>> findUnique(TransformDatabaseTable table, {required Map<String, dynamic> where}) async {
+  Future<TransformEither<Exception, Map<String, dynamic>?>> selectFirst(TransformDatabaseTable table, {TransformDatabaseWhere? where, List<String>? columns, List<String>? orderBy}) async {
+    String query = "";
     try {
-      String query = "";
       query += " select * ";
       query += "\n from ${table.schema}.${table.name} ";
-      query += "\n where ";
-      query += where.keys.map((key) => "($key = @${key}_value)").join(" and ");
-      Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
+      if (where?.sql.isNotEmpty ?? false) query += "\n where ${where!.sql} ";
+      //query += "\n where ";
+      //query += where.keys.map((key) => "($key = @${key}_value)").join(" and ");
+      //Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
       query += "\n limit 1 ";
-      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query, parameters: parameters);
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query);
       return result.fold((l) => Left(l), (r) => Right(r.isNotEmpty ? r.first : null));
     } on Exception catch (e) {
-      return Left(Exception("Error executing findUnique: ${table.name} ${where.toString()}\n$e"));
+      return Left(Exception("Error executing findUnique: ${table.name} $query\n$e"));
     }
+  }
+
+  @override
+  Future<TransformEither<Exception, int>> count(TransformDatabaseTable table, {TransformDatabaseWhere? where}) async {
+    String query = "";
+    try {
+      query += " select count(*) as count ";
+      query += "\n from ${table.schema}.${table.name} ";
+      if (where?.sql.isNotEmpty ?? false) query += "\n where ${where!.sql} ";
+      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query);
+      return result.fold((l) => Left(l), (r) => Right(r.first["count"] as int));
+    } on Exception catch (e) {
+      return Left(Exception("Error executing count: ${table.name} $query\n$e"));
+    }
+  }
+
+  @override
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> select(TransformDatabaseTable table, {TransformDatabaseWhere? where, List<String>? columns, List<String>? orderBy, int? limit, int? offset}) {
+    // TODO: implement select
+    throw UnimplementedError();
   }
 
   @override
@@ -293,6 +315,7 @@ class TransformDatabaseSessionPostgres extends TransformDatabaseSession {
       return Left(Exception("Error executing findMany: ${table.name} ${where.toString()}\n$e"));
     }
   }
+   */
 }
 
 abstract class TransformDatabasePostgres extends TransformDatabase {

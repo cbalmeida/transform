@@ -27,7 +27,49 @@ abstract class TransformDatabaseSession {
 
   Future<TransformEither<Exception, bool>> createColumn(TransformDatabaseTable table, TransformDatabaseColumn column);
 
-  Future<TransformEither<Exception, Map<String, dynamic>?>> findUnique(TransformDatabaseTable table, {required Map<String, dynamic> where});
+  //Future<TransformEither<Exception, Map<String, dynamic>?>> selectFirst(TransformDatabaseTable table, {TransformDatabaseWhere? where, List<String>? columns, List<String>? orderBy});
 
-  Future<TransformEither<Exception, List<Map<String, dynamic>>>> findMany(TransformDatabaseTable table, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset});
+  //Future<TransformEither<Exception, List<Map<String, dynamic>>>> select(TransformDatabaseTable table, {TransformDatabaseWhere? where, List<String>? columns, List<String>? orderBy, int? limit, int? offset});
+
+  //Future<TransformEither<Exception, int>> count(TransformDatabaseTable table, {TransformDatabaseWhere? where});
+
+  /*
+
+  Future<TransformEither<Exception, Map<String, dynamic>>> create(TransformDatabaseTable table, {required Map<String, dynamic> object});
+
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> createMany(TransformDatabaseTable table, {required List<Map<String, dynamic>> objects});
+
+  Future<TransformEither<Exception, Map<String, dynamic>>> update(TransformDatabaseTable table, {required Map<String, dynamic> object});
+
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> updateMany(TransformDatabaseTable table, {required List<Map<String, dynamic>> objects});
+
+  Future<TransformEither<Exception, Map<String, dynamic>>> upsert(TransformDatabaseTable table, {required Map<String, dynamic> object});
+
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> upsertMany(TransformDatabaseTable table, {required List<Map<String, dynamic>> objects});
+
+  Future<TransformEither<Exception, Map<String, dynamic>>> delete(TransformDatabaseTable table, {required Map<String, dynamic> object});
+
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> deleteMany(TransformDatabaseTable table, {required List<Map<String, dynamic>> objects});
+
+  Future<TransformEither<Exception, Map<String, dynamic>>> deleteAll(TransformDatabaseTable table);
+
+   */
+
+/*
+findUnique()
+findUniqueOrThrow()
+findFirst()
+findFirstOrThrow()
+findMany()
+create()
+update()
+upsert()
+delete()
+createMany()
+updateMany()
+deleteMany()
+count()
+aggregate()
+groupBy()
+*/
 }

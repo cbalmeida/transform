@@ -5,6 +5,7 @@ export 'src/database/transform_database.dart';
 export 'src/database/transform_database_column.dart';
 export 'src/database/transform_database_column_type.dart';
 export 'src/database/transform_database_index.dart';
+export 'src/database/transform_database_query_builder.dart';
 export 'src/database/transform_database_session.dart';
 export 'src/database/transform_database_table.dart';
 export 'src/model/transform_model.dart';
