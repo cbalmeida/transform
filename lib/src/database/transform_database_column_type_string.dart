@@ -2,6 +2,15 @@ part of 'transform_database_column_type.dart';
 
 abstract class TransformDatabaseColumnTypeString extends TransformDatabaseColumnType {
   TransformDatabaseColumnTypeString();
+
+  @override
+  dynamic convertValue(dynamic value) => StringUtil.decodeNotNull(value, '');
+
+  @override
+  String sqlDefaultValue(TransformDatabaseType databaseType, dynamic defaultValue) {
+    if (defaultValue == null) return "''";
+    return "'${defaultValue.toString()}'";
+  }
 }
 
 /// unlimited length
@@ -9,8 +18,8 @@ class TransformDatabaseColumnText extends TransformDatabaseColumnTypeString {
   TransformDatabaseColumnText();
 
   @override
-  String asSql(TransformDatabase database) {
-    switch (database.type) {
+  String asSql(TransformDatabaseType databaseType) {
+    switch (databaseType) {
       case TransformDatabaseType.postgres:
         return "text";
       case TransformDatabaseType.mysql:
@@ -27,8 +36,8 @@ class TransformDatabaseColumnVarchar extends TransformDatabaseColumnTypeString {
   }
 
   @override
-  String asSql(TransformDatabase database) {
-    switch (database.type) {
+  String asSql(TransformDatabaseType databaseType) {
+    switch (databaseType) {
       case TransformDatabaseType.postgres:
         return "varchar($length)";
       case TransformDatabaseType.mysql:

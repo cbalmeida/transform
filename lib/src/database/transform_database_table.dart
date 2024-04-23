@@ -19,6 +19,7 @@ class TransformDatabaseTable {
     assert(name.isNotEmpty);
     assert(schema.isNotEmpty);
     assert(columns.isNotEmpty);
+    assert(primaryKeyColumns.isNotEmpty);
 
     for (TransformDatabaseColumn column in columns) {
       if (columns.any((c) => c != column && c.name == column.name)) {
@@ -36,11 +37,35 @@ class TransformDatabaseTable {
     }
   }
 
-  Future<TransformEither<Exception, bool>> exists(TransformDatabase database) => database.tableExists(this);
+  List<TransformDatabaseColumn> get primaryKeyColumns => columns.where((element) => element.isPrimaryKey).toList();
 
-  Future<TransformEither<Exception, bool>> create(TransformDatabase database) => database.createTable(this);
+  Future<TransformEither<Exception, bool>> exists(TransformDatabaseSession session) => session.tableExists(this);
 
-  Future<TransformEither<Exception, Map<String, dynamic>?>> findUnique(TransformDatabase dataBase, {required Map<String, dynamic> where}) => dataBase.findUnique(this, where: where);
+  Future<TransformEither<Exception, bool>> create(TransformDatabaseSession session) => session.createTable(this);
 
-  Future<TransformEither<Exception, List<Map<String, dynamic>>>> findMany(TransformDatabase dataBase, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset}) => dataBase.findMany(this, where: where, orderBy: orderBy, limit: limit, offset: offset);
+  /*
+  Future<TransformEither<Exception, Map<String, dynamic>?>> findUnique(TransformDatabaseSession session, {required Map<String, dynamic> where}) => session.findUnique(this, where: where);
+
+  Future<TransformEither<Exception, Map<String, dynamic>?>> selectFirst(TransformDatabaseSession session, {required Map<String, dynamic> where}) => session.findUnique(this, where: where);
+
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> select(TransformDatabaseSession session, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset}) => session.findMany(this, where: where, orderBy: orderBy, limit: limit, offset: offset);
+
+   */
+/*
+findUnique()
+findUniqueOrThrow()
+findFirst()
+findFirstOrThrow()
+findMany()
+create()
+update()
+upsert()
+delete()
+createMany()
+updateMany()
+deleteMany()
+count()
+aggregate()
+groupBy()
+*/
 }

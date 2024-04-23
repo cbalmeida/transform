@@ -25,14 +25,15 @@ class TransformDatabaseColumn {
     if (isUnique) assert(!isNullable);
   }
 
-  String asSql(TransformDatabase database) {
-    return "$name ${type.asSql(database)} ${isNullable ? 'null' : 'not null'} ${defaultValue != null ? 'default ${_defaultValueSql(database)}' : ''}";
+  String asSql(TransformDatabaseType databaseType) {
+    return "$name ${type.asSql(databaseType)} ${isNullable ? 'null' : 'not null'} ${defaultValue != null ? 'default ${sqlDefaultValue(databaseType)}' : ''}";
   }
 
-  String _defaultValueSql(TransformDatabase database) {
-    if (defaultValue == null) return '';
-    if (defaultValue is String) return "'$defaultValue'";
-    if (defaultValue is bool) return defaultValue ? 'true' : 'false';
-    return defaultValue.toString();
+  String asSqlNullable(TransformDatabaseType databaseType) {
+    return "$name ${type.asSql(databaseType)} null ";
   }
+
+  String sqlDefaultValue(TransformDatabaseType databaseType) => type.sqlDefaultValue(databaseType, defaultValue);
+
+  dynamic convertValue(dynamic value) => type.convertValue(value);
 }

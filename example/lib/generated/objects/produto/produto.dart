@@ -16,6 +16,15 @@ class Produto extends TransformMapped {
 
   int? get quantidade => Util.intFromMap(values, 'quantidade');
   set quantidade(int? value) => values['quantidade'] = value;
+
+  DateTime? get vencimento => Util.dateTimeFromMap(values, 'vencimento');
+  set vencimento(DateTime? value) => values['vencimento'] = value;
+
+  bool get ativo => Util.boolFromMapNotNull(values, 'ativo', false);
+  set ativo(bool value) => values['ativo'] = value;
+
+  Map<String, dynamic> get dimensoes => Util.jsonTimeFromMapNotNull(values, 'dimensoes', {});
+  set dimensoes(Map<String, dynamic> value) => values['dimensoes'] = value;
 }
 
 class ProdutoAdapter extends TransformModelAdapter<Produto> {
