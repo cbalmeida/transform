@@ -19,7 +19,7 @@ class TransformRouteResponseOK<O extends TransformRouteOutput> extends Transform
   const TransformRouteResponseOK({required this.output});
 
   @override
-  Response toResponse() => Response.ok(output.toJson());
+  Response toResponse() => Response.ok(output.body, headers: output.headers);
 }
 
 class TransformRouteResponseNotFound<O extends TransformRouteOutput> extends TransformRouteResponse<O> {

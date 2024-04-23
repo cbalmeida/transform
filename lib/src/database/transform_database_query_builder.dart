@@ -1,19 +1,13 @@
 import '../../transform.dart';
 
+part 'transform_database_query_builder_delete.dart';
+part 'transform_database_query_builder_insert.dart';
 part 'transform_database_query_builder_select.dart';
+part 'transform_database_query_builder_update.dart';
+part 'transform_database_query_builder_upsert.dart';
 
 abstract class TransformDatabaseQueryBuilder<S> {
   String asSql(TransformDatabaseType databaseType);
-
-  S? Function(List<Map<String, dynamic>> result) convertResult;
-
-  TransformDatabaseQueryBuilder(this.convertResult);
-
-  Future<TransformEither<Exception, S?>> execute(TransformDatabaseSession session) async {
-    String sql = asSql(session.databaseType);
-    TransformEither<Exception, List<Map<String, dynamic>>> result = await session.execute(sql);
-    return result.fold((left) => Left(result.left), (right) => Right(convertResult(right)));
-  }
 }
 
 class TransformDatabaseQueryBuilderCondition {

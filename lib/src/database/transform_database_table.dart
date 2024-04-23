@@ -19,6 +19,7 @@ class TransformDatabaseTable {
     assert(name.isNotEmpty);
     assert(schema.isNotEmpty);
     assert(columns.isNotEmpty);
+    assert(primaryKeyColumns.isNotEmpty);
 
     for (TransformDatabaseColumn column in columns) {
       if (columns.any((c) => c != column && c.name == column.name)) {
@@ -35,6 +36,8 @@ class TransformDatabaseTable {
       }
     }
   }
+
+  List<TransformDatabaseColumn> get primaryKeyColumns => columns.where((element) => element.isPrimaryKey).toList();
 
   Future<TransformEither<Exception, bool>> exists(TransformDatabaseSession session) => session.tableExists(this);
 

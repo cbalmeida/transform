@@ -1,7 +1,9 @@
 part of 'transform_database_query_builder.dart';
 
 class TransformDatabaseQueryBuilderSelect<S> extends TransformDatabaseQueryBuilder<S> {
-  TransformDatabaseQueryBuilderSelect({required S? Function(List<Map<String, dynamic>> result) convertResult}) : super(convertResult);
+  final TransformModelAdapter<S> adapter;
+
+  TransformDatabaseQueryBuilderSelect(this.adapter);
 
   List<String>? _columns;
 
@@ -67,5 +69,11 @@ class TransformDatabaseQueryBuilderSelect<S> extends TransformDatabaseQueryBuild
     String offsetSql = _offset == null ? "" : "offset $_offset";
     String sql = "select  \n  $columnsSql  \n  $fromSql  \n  $whereSql  \n  $orderBySql \n  $limitSql  \n  $offsetSql";
     return sql;
+  }
+
+  Future<TransformEither<Exception, List<S>>> execute(TransformDatabaseSession session) async {
+    String sql = asSql(session.databaseType);
+    TransformEither<Exception, List<Map<String, dynamic>>> result = await session.execute(sql);
+    return result.fold((left) => Left(result.left), (right) => Right(right.map((e) => adapter.fromMap(e)).toList()));
   }
 }

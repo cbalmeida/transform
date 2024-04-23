@@ -38,4 +38,6 @@ abstract class TransformModel {
         columns: columns.map((e) => e.databaseColumn).toList(),
         indexes: indexes.map((e) => e.databaseIndex).toList(),
       );
+
+  List<TransformModelColumn> get primaryKeyColumns => columns.where((element) => element.isPrimaryKey).toList();
 }

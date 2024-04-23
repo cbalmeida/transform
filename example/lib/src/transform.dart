@@ -1,10 +1,11 @@
 import 'package:testeexemplo/src/webserver/webserver.dart';
 import 'package:transform/transform.dart';
 
-import '../src/database/postgres.dart';
-import 'generated.dart';
+import '../generated/generated.dart';
+import '../generated/objects/objects_mix_in.dart';
+import 'database/postgres.dart';
 
-class Transform extends TransformServer {
+class Transform extends TransformServer with ObjectsMixIn {
   Transform._({required super.database, required super.webserver, required super.objects});
 
   static Transform? _instance;
@@ -30,8 +31,6 @@ class Transform extends TransformServer {
 
       Util.log("============ Server ============");
       Util.log("Server initialization completed!");
-
-      // await instance.database.connect();
     } catch (e) {
       Util.logError("Error starting server:\n$e");
     }
@@ -44,5 +43,8 @@ class Transform extends TransformServer {
     return Transform._(webserver: webServer, database: dataBase, objects: objects);
   }
 
-  ProdutoObject get produto => get<ProdutoObject>();
+  late final Map<Type, TransformObject> _objectsMap = Map.fromEntries(objects.map((e) => MapEntry(e.runtimeType, e)));
+
+  @override
+  T get<T extends TransformObject>() => _objectsMap[T] as T;
 }
