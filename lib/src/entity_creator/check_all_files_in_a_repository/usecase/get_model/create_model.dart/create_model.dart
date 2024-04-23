@@ -24,6 +24,7 @@ class CreateModels{
 
 
   void createFile()async{
+    print(classModelList.length);
     for(var i in classModelList){
       String body = '';
       body += '\n';

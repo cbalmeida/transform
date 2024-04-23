@@ -2,15 +2,13 @@
 
 import 'dart:io';
 
-abstract class GetFiles{
+abstract interface class GetFiles{
   
-  void inicialize();
-
   void getFiles();
 
-  void convert(List<File> files);
+  void convertFiles(List<File> files);
 
-  void create();
+  void createFiles();
 
 
 }

@@ -1,8 +1,8 @@
 import 'package:transform/transform.dart';
 
-class ProdutoModel extends TransformModel {
+class Produto2Model extends TransformModel {
   @override
-  String get name => "produto";
+  String get name => "produto2";
 
   @override
   String get schema => "public";

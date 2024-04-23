@@ -4,13 +4,12 @@ import 'package:transform/src/entity_creator/check_all_files_in_a_repository/use
 import 'package:transform/src/entity_creator/check_all_files_in_a_repository/usecase/get_model/get_files.dart';
 import 'package:transform/src/entity_creator/check_all_files_in_a_repository/usecase/get_model/model/class_model.dart';
 
-class GetAllFilesModels extends GetFiles{
+class GetAllFilesModels implements GetFiles{
 
   Directory diretorio = Directory('example/lib/src/models/');
   List<ClassModel> classModelList = [];
 
-  @override
-  void inicialize(){
+  GetAllFilesModels(){
     getFiles();
   }
 
@@ -23,21 +22,21 @@ class GetAllFilesModels extends GetFiles{
           fileDart.add(entity);
         }
       });
-      convert(fileDart);
+      convertFiles(fileDart);
     } else {
       print('O diretório não existe.');
     }
   }
 
   @override
-  void convert(List<File> files)async{
+  void convertFiles(List<File> files)async{
     classModelList = await Convert().inittialize(files);
-    create();
+    createFiles();
   }
 
   
   @override
-  void create() {
+  void createFiles() {
     CreateModels().initialize(classModelList);
   }
 

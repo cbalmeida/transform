@@ -1,4 +1,5 @@
-import 'package:testeexemplo/src/models/produto.dart';
+
+import 'package:testeexemplo/src/models/tttttttt.dart';
 import 'package:transform/transform.dart';
 
 class Produto extends TransformMapped {

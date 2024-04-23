@@ -1,5 +1,6 @@
 library transform;
 
+export 'src/entity_creator/check_all_files_in_a_repository/get.dart';
 export 'src/api/transform_api.dart';
 export 'src/database/transform_database.dart';
 export 'src/database/transform_database_column.dart';
