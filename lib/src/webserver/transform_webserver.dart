@@ -22,14 +22,17 @@ class TransformWebServerParams {
     int port = Util.intFromMapNotNull(map, 'WEBSERVER_PORT', 8080);
     return TransformWebServerParams(host: host, port: port);
   }
+
+  factory TransformWebServerParams.fromValues({required String host, required int port}) {
+    return TransformWebServerParams(host: host, port: port);
+  }
 }
 
 abstract class TransformWebServer {
   final List<TransformApi> apis;
+  final TransformWebServerParams params;
 
-  TransformWebServer({required this.apis});
-
-  Future<TransformWebServerParams> get params;
+  TransformWebServer({required this.apis, required this.params});
 
   HttpServer? _httpServer;
 

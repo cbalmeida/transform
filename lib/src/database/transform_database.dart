@@ -34,25 +34,15 @@ abstract class TransformDatabase {
   registerTable(TransformDatabaseTable table) => tables.add(table);
 
   Future<TransformEither<Exception, R>> transaction<R>(Future<TransformEither<Exception, R>> Function(TransformDatabaseSession session) body);
+
+  static TransformDatabase postgres(TransformDatabaseParamsPostgres params) => TransformDatabasePostgres(params: params);
+
+  static TransformDatabase fromParams(TransformDatabaseParams params) {
+    switch (params.type) {
+      case TransformDatabaseType.postgres:
+        return postgres(params as TransformDatabaseParamsPostgres);
+      default:
+        throw Exception("Database type not implemented: ${params.type}");
+    }
+  }
 }
-
-/*
-
-findUnique()
-findUniqueOrThrow()
-findFirst()
-findFirstOrThrow()
-findMany()
-create()
-update()
-upsert()
-delete()
-createMany()
-updateMany()
-deleteMany()
-count()
-aggregate()
-groupBy()
-
-
- */

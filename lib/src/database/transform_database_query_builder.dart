@@ -2,6 +2,7 @@ import '../../transform.dart';
 
 part 'transform_database_query_builder_delete.dart';
 part 'transform_database_query_builder_insert.dart';
+part 'transform_database_query_builder_raw.dart';
 part 'transform_database_query_builder_select.dart';
 part 'transform_database_query_builder_update.dart';
 part 'transform_database_query_builder_upsert.dart';
@@ -19,11 +20,17 @@ class TransformDatabaseQueryBuilderCondition {
 
   TransformDatabaseQueryBuilderCondition._(this.firstVar, this.operator, this.secondVar);
 
-  String get sql {
-    String firstVarStr = firstVar is String ? "$firstVar" : firstVar.toString();
-    String secondVarStr = secondVar is String ? "'$secondVar'" : secondVar.toString();
-    return '$firstVarStr $operator $secondVarStr';
+  String get firstVarStr {
+    if (firstVar is String) return "'$firstVar'";
+    return firstVar.toString();
   }
+
+  String get secondVarStr {
+    if (secondVar is String) return "'$secondVar'";
+    return secondVar.toString();
+  }
+
+  String get sql => '( $firstVarStr $operator $secondVarStr )';
 
   factory TransformDatabaseQueryBuilderCondition.equals(dynamic firstVar, dynamic secondVar) => TransformDatabaseQueryBuilderCondition._(firstVar, '=', secondVar);
   factory TransformDatabaseQueryBuilderCondition.notEquals(dynamic firstVar, dynamic secondVar) => TransformDatabaseQueryBuilderCondition._(firstVar, '<>', secondVar);
@@ -33,6 +40,7 @@ class TransformDatabaseQueryBuilderCondition {
   factory TransformDatabaseQueryBuilderCondition.lowerOrEqualsThan(dynamic firstVar, dynamic secondVar) => TransformDatabaseQueryBuilderCondition._(firstVar, '<=', secondVar);
   factory TransformDatabaseQueryBuilderCondition.biggerThan(dynamic firstVar, dynamic secondVar) => TransformDatabaseQueryBuilderCondition._(firstVar, '>', secondVar);
   factory TransformDatabaseQueryBuilderCondition.biggerOrEqualsThan(dynamic firstVar, dynamic secondVar) => TransformDatabaseQueryBuilderCondition._(firstVar, '>=', secondVar);
+  factory TransformDatabaseQueryBuilderCondition.exists(dynamic firstVar, dynamic secondVar) => TransformDatabaseQueryBuilderCondition._(firstVar, 'exists', secondVar);
 }
 
 class TransformDatabaseQueryBuilderJunction {

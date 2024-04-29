@@ -40,4 +40,11 @@ abstract class TransformModel {
       );
 
   List<TransformModelColumn> get primaryKeyColumns => columns.where((element) => element.isPrimaryKey).toList();
+
+  TransformDatabaseColumn columnByName(String name) {
+    for (TransformModelColumn column in columns) {
+      if (column.name.toLowerCase() == name.toLowerCase()) return column.databaseColumn;
+    }
+    throw Exception("Column not found: $name");
+  }
 }

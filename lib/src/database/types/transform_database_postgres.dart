@@ -2,7 +2,7 @@ part of '../transform_database.dart';
 
 enum TransformDatabasePostgresSslMode { disable, require, verifyFull }
 
-class TransformDatabasePostgresParams {
+class TransformDatabaseParamsPostgres extends TransformDatabaseParams {
   final String host;
   final int port;
   final String database;
@@ -10,9 +10,22 @@ class TransformDatabasePostgresParams {
   final String? password;
   final TransformDatabasePostgresSslMode? sslMode;
 
-  TransformDatabasePostgresParams({required this.host, required this.port, required this.database, required this.username, required this.password, required this.sslMode});
+  TransformDatabaseParamsPostgres({required this.host, required this.port, required this.database, required this.username, required this.password, required this.sslMode}) : super(type: TransformDatabaseType.postgres);
 
-  factory TransformDatabasePostgresParams.fromEnvironment() {
+  postgres.SslMode get postgresSslMode {
+    switch (sslMode) {
+      case TransformDatabasePostgresSslMode.disable:
+        return postgres.SslMode.disable;
+      case TransformDatabasePostgresSslMode.require:
+        return postgres.SslMode.require;
+      case TransformDatabasePostgresSslMode.verifyFull:
+        return postgres.SslMode.verifyFull;
+      case null:
+        return postgres.SslMode.disable;
+    }
+  }
+
+  factory TransformDatabaseParamsPostgres.fromEnvironment() {
     String host = const String.fromEnvironment('POSTGRES_HOST', defaultValue: 'localhost');
     int port = const int.fromEnvironment('POSTGRES_PORT', defaultValue: 5432);
     String database = const String.fromEnvironment('POSTGRES_DATABASE', defaultValue: 'postgres');
@@ -30,7 +43,7 @@ class TransformDatabasePostgresParams {
       default:
         sslMode = null;
     }
-    return TransformDatabasePostgresParams(
+    return TransformDatabaseParamsPostgres(
       host: host,
       port: port,
       database: database,
@@ -40,7 +53,7 @@ class TransformDatabasePostgresParams {
     );
   }
 
-  factory TransformDatabasePostgresParams.fromMap(Map<String, dynamic> map) {
+  factory TransformDatabaseParamsPostgres.fromMap(Map<String, dynamic> map) {
     String host = Util.stringFromMapNotNull(map, 'POSTGRES_HOST', 'localhost');
     int port = Util.intFromMapNotNull(map, 'POSTGRES_PORT', 5432);
     String database = Util.stringFromMapNotNull(map, 'POSTGRES_DATABASE', 'postgres');
@@ -58,7 +71,7 @@ class TransformDatabasePostgresParams {
       default:
         sslMode = null;
     }
-    return TransformDatabasePostgresParams(
+    return TransformDatabaseParamsPostgres(
       host: host,
       port: port,
       database: database,
@@ -250,110 +263,18 @@ class TransformDatabaseSessionPostgres extends TransformDatabaseSession {
       return Left(Exception("Error executing createColumn: ${table.name}.${column.name}\n$e"));
     }
   }
-
-/*
-  @override
-  Future<TransformEither<Exception, Map<String, dynamic>?>> selectFirst(TransformDatabaseTable table, {TransformDatabaseWhere? where, List<String>? columns, List<String>? orderBy}) async {
-    String query = "";
-    try {
-      query += " select * ";
-      query += "\n from ${table.schema}.${table.name} ";
-      if (where?.sql.isNotEmpty ?? false) query += "\n where ${where!.sql} ";
-      //query += "\n where ";
-      //query += where.keys.map((key) => "($key = @${key}_value)").join(" and ");
-      //Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
-      query += "\n limit 1 ";
-      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query);
-      return result.fold((l) => Left(l), (r) => Right(r.isNotEmpty ? r.first : null));
-    } on Exception catch (e) {
-      return Left(Exception("Error executing findUnique: ${table.name} $query\n$e"));
-    }
-  }
-
-  @override
-  Future<TransformEither<Exception, int>> count(TransformDatabaseTable table, {TransformDatabaseWhere? where}) async {
-    String query = "";
-    try {
-      query += " select count(*) as count ";
-      query += "\n from ${table.schema}.${table.name} ";
-      if (where?.sql.isNotEmpty ?? false) query += "\n where ${where!.sql} ";
-      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query);
-      return result.fold((l) => Left(l), (r) => Right(r.first["count"] as int));
-    } on Exception catch (e) {
-      return Left(Exception("Error executing count: ${table.name} $query\n$e"));
-    }
-  }
-
-  @override
-  Future<TransformEither<Exception, List<Map<String, dynamic>>>> select(TransformDatabaseTable table, {TransformDatabaseWhere? where, List<String>? columns, List<String>? orderBy, int? limit, int? offset}) {
-    // TODO: implement select
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<TransformEither<Exception, List<Map<String, dynamic>>>> findMany(TransformDatabaseTable table, {required Map<String, dynamic> where, Map<String, dynamic>? orderBy, int? limit, int? offset}) async {
-    try {
-      String query = "";
-      query += " select * ";
-      query += "\n from ${table.schema}.${table.name} ";
-      query += "\n where ";
-      query += where.keys.map((key) => "    ($key = @${key}_value) ").join("    and ");
-      Map<String, dynamic> parameters = where.map((key, value) => MapEntry("${key}_value", value));
-      if (orderBy != null) {
-        query += "\n order by ";
-        query += orderBy.keys.map((key) => "$key ${orderBy[key]} ").join(", ");
-      }
-      if (limit != null) {
-        query += "\n limit $limit ";
-      }
-      if (offset != null) {
-        query += "\n offset $offset ";
-      }
-      TransformEither<Exception, List<Map<String, dynamic>>> result = await execute(query, parameters: parameters);
-      return result.fold((l) => Left(l), (r) => Right(r));
-    } on Exception catch (e) {
-      return Left(Exception("Error executing findMany: ${table.name} ${where.toString()}\n$e"));
-    }
-  }
-   */
 }
 
-abstract class TransformDatabasePostgres extends TransformDatabase {
-  TransformDatabasePostgres();
+class TransformDatabasePostgres extends TransformDatabase {
+  final TransformDatabaseParamsPostgres params;
 
-  Future<TransformDatabasePostgresParams> get params;
+  TransformDatabasePostgres({required this.params});
 
   postgres.Endpoint? _endPoint;
-  Future<postgres.Endpoint> get endPoint async {
-    if (_endPoint == null) {
-      TransformDatabasePostgresParams params = await this.params;
-      _endPoint = postgres.Endpoint(host: params.host, port: params.port, database: params.database, username: params.username, password: params.password);
-    }
-    return _endPoint!;
-  }
-
-  Future<postgres.SslMode> get postgresSslMode async {
-    TransformDatabasePostgresParams params = await this.params;
-    switch (params.sslMode) {
-      case TransformDatabasePostgresSslMode.disable:
-        return postgres.SslMode.disable;
-      case TransformDatabasePostgresSslMode.require:
-        return postgres.SslMode.require;
-      case TransformDatabasePostgresSslMode.verifyFull:
-        return postgres.SslMode.verifyFull;
-      case null:
-        return postgres.SslMode.disable;
-    }
-  }
+  postgres.Endpoint get endPoint => _endPoint ??= postgres.Endpoint(host: params.host, port: params.port, database: params.database, username: params.username, password: params.password);
 
   postgres.ConnectionSettings? _connectionSettings;
-  Future<postgres.ConnectionSettings> get connectionSettings async {
-    if (_connectionSettings == null) {
-      postgres.SslMode sslMode = await postgresSslMode;
-      _connectionSettings = postgres.ConnectionSettings(sslMode: sslMode);
-    }
-    return _connectionSettings!;
-  }
+  postgres.ConnectionSettings get connectionSettings => _connectionSettings ??= postgres.ConnectionSettings(sslMode: params.postgresSslMode);
 
   postgres.Connection? _connection;
   Future<postgres.Connection> connection() async => _connection ??= await postgres.Connection.open(await endPoint, settings: await connectionSettings);
@@ -372,7 +293,7 @@ abstract class TransformDatabasePostgres extends TransformDatabase {
       });
       return Right(result);
     } on Exception catch (e) {
-      return Left(Exception("Error executing transaction:\n$e"));
+      return Left(e);
     }
   }
 }

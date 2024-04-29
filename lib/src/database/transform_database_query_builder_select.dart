@@ -12,9 +12,9 @@ class TransformDatabaseQueryBuilderSelect<S> extends TransformDatabaseQueryBuild
     return this;
   }
 
-  String? _from;
+  TransformDatabaseTable? _from;
 
-  TransformDatabaseQueryBuilderSelect from(String from) {
+  TransformDatabaseQueryBuilderSelect from(TransformDatabaseTable from) {
     _from = from;
     return this;
   }
@@ -62,7 +62,7 @@ class TransformDatabaseQueryBuilderSelect<S> extends TransformDatabaseQueryBuild
   @override
   String asSql(TransformDatabaseType databaseType) {
     String columnsSql = ((_columns ?? ['*'])).join(", ");
-    String fromSql = _from == null ? "" : "from $_from";
+    String fromSql = _from == null ? "" : "from ${_from!.sql}";
     String whereSql = _where == null ? "" : "where ${_where!.sql}";
     String orderBySql = _orderByColumns == null ? "" : "order by ${_orderByColumns!.map((e) => "${e.columnName} ${e.ascending ? 'asc' : 'desc'}").join(", ")}";
     String limitSql = _limit == null ? "" : "limit $_limit";

@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
+import '../../transform.dart';
+
 part 'transform_route_handler.dart';
 part 'transform_route_input.dart';
 part 'transform_route_output.dart';
@@ -34,15 +36,13 @@ enum TransformRouteMethod {
 }
 
 abstract class TransformRoute<I extends TransformRouteInput, O extends TransformRouteOutput> {
-  final TransformRouteMethod method;
-  final String path;
-  final TransformRouteHandler<I, O> handler;
+  final TransformInjector injector;
 
-  TransformRoute({
-    required this.method,
-    required this.path,
-    required this.handler,
-  });
+  TransformRoute(this.injector);
+
+  TransformRouteMethod get method;
+  String get path;
+  TransformRouteHandler<I, O> get handler;
 
   Future<Map<String, dynamic>> _bodyParams(Request request) async {
     try {
@@ -61,8 +61,16 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
       final Map<String, dynamic> bodyParams = await _bodyParams(request);
       final Map<String, dynamic> params = {...urlParams, ...queryParams, ...bodyParams};
 
+      TransformJWTPayload? tokenPayload;
+      if (handler.checkToken) {
+        final String token = request.headers["Authorization"] ?? request.url.queryParameters["token"] ?? "";
+        TransformEither<Exception, TransformJWTPayload> decodedToken = handler.decodeToken(token);
+        if (decodedToken.isLeft) return Response.forbidden("Invalid token: ${decodedToken.left}");
+        tokenPayload = decodedToken.right;
+      }
+
       final I input = handler.inputFromParams(params);
-      final routeResponse = await handler.handler(input);
+      final routeResponse = await handler.handler(input, tokenPayload ?? TransformJWTPayload.empty());
       Response response = routeResponse.toResponse();
       return response;
     } catch (e) {

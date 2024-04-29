@@ -25,6 +25,9 @@ class TransformDatabaseColumn {
     if (isUnique) assert(!isNullable);
   }
 
+  @override
+  String toString() => name;
+
   String asSql(TransformDatabaseType databaseType) {
     return "$name ${type.asSql(databaseType)} ${isNullable ? 'null' : 'not null'} ${defaultValue != null ? 'default ${sqlDefaultValue(databaseType)}' : ''}";
   }
@@ -36,4 +39,14 @@ class TransformDatabaseColumn {
   String sqlDefaultValue(TransformDatabaseType databaseType) => type.sqlDefaultValue(databaseType, defaultValue);
 
   dynamic convertValue(dynamic value) => type.convertValue(value);
+
+  TransformDatabaseQueryBuilderCondition equals(dynamic value) => TransformDatabaseQueryBuilderCondition.equals(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition notEquals(dynamic value) => TransformDatabaseQueryBuilderCondition.notEquals(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition inValues(dynamic value) => TransformDatabaseQueryBuilderCondition.inValues(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition notInValues(dynamic value) => TransformDatabaseQueryBuilderCondition.notInValues(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition lowerThan(dynamic value) => TransformDatabaseQueryBuilderCondition.lowerThan(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition lowerOrEqualsThan(dynamic value) => TransformDatabaseQueryBuilderCondition.lowerOrEqualsThan(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition biggerThan(dynamic value) => TransformDatabaseQueryBuilderCondition.biggerThan(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition biggerOrEqualsThan(dynamic value) => TransformDatabaseQueryBuilderCondition.biggerOrEqualsThan(this, convertValue(value));
+  TransformDatabaseQueryBuilderCondition exists(dynamic value) => TransformDatabaseQueryBuilderCondition.exists(this, convertValue(value));
 }

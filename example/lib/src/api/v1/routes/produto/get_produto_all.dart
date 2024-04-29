@@ -1,6 +1,7 @@
 import 'package:transform/transform.dart';
 
 import '../../../../../generated/generated.dart';
+import '../../../../usecases/produto/get_produto_all_usecase.dart';
 
 class GetProdutoAllRouteInput extends TransformRouteInput {
   const GetProdutoAllRouteInput();
@@ -19,32 +20,41 @@ class GetProdutoAllRouteOutput extends TransformRouteOutputJson {
 }
 
 class GetProdutoAllRouteHandler extends TransformRouteHandler<GetProdutoAllRouteInput, GetProdutoAllRouteOutput> {
+  final GetProdutoAllUseCase getProdutoAllUseCase;
+
+  GetProdutoAllRouteHandler({required this.getProdutoAllUseCase, required super.jwt});
+
+  factory GetProdutoAllRouteHandler.create(TransformInjector injector) {
+    return GetProdutoAllRouteHandler(
+      getProdutoAllUseCase: injector.get(),
+      jwt: injector.get(),
+    );
+  }
+
   @override
   GetProdutoAllRouteInput inputFromParams(Map<String, dynamic> params) => GetProdutoAllRouteInput.fromMap(params);
 
   @override
-  Future<TransformRouteResponse<GetProdutoAllRouteOutput>> handler(GetProdutoAllRouteInput input) async {
-    // abre uma transacao no banco de dados para efetuar a busca do produto
-    TransformEither<Exception, List<Produto>> result = await Transform.instance.database.transaction<List<Produto>>((session) async {
-      TransformEither<Exception, List<Produto>> result = await Transform.instance.produto.select.all().execute(session);
-      return result.fold((value) => Left(value), (value) => Right(value));
-    });
+  Future<TransformRouteResponse<GetProdutoAllRouteOutput>> handler(GetProdutoAllRouteInput input, TransformJWTPayload tokenPayload) async {
+    TransformEither<Exception, List<Produto>> result = await getProdutoAllUseCase();
 
-    // se ocorreu um erro ao buscar o produto, retorna um erro interno
     if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);
     List<Produto> produtos = result.right;
 
-    // retorna o produto encontrado
     GetProdutoAllRouteOutput output = GetProdutoAllRouteOutput(produtos: produtos);
     return TransformRouteResponse.ok(output);
   }
 }
 
 class GetProdutoAllRoute extends TransformRoute<GetProdutoAllRouteInput, GetProdutoAllRouteOutput> {
-  GetProdutoAllRoute()
-      : super(
-          method: TransformRouteMethod.get,
-          path: '/produto',
-          handler: GetProdutoAllRouteHandler(),
-        );
+  GetProdutoAllRoute(super.injector);
+
+  @override
+  TransformRouteHandler<GetProdutoAllRouteInput, GetProdutoAllRouteOutput> get handler => GetProdutoAllRouteHandler.create(injector);
+
+  @override
+  TransformRouteMethod get method => TransformRouteMethod.get;
+
+  @override
+  String get path => '/produto';
 }

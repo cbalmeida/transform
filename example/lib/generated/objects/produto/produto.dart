@@ -1,9 +1,26 @@
-
-import 'package:testeexemplo/src/models/tttttttt.dart';
 import 'package:transform/transform.dart';
+
+import '../../../src/models/produto/produto_model.dart';
 
 class Produto extends TransformMapped {
   Produto({required super.values});
+
+  factory Produto.create({
+    required String? nome,
+    required double? preco,
+    required int? quantidade,
+    required DateTime? vencimento,
+    required bool? ativo,
+    required Map<String, dynamic>? dimensoes,
+  }) =>
+      Produto(values: {
+        'nome': nome,
+        'preco': preco,
+        'quantidade': quantidade,
+        'vencimento': vencimento,
+        'ativo': ativo,
+        'dimensoes': dimensoes,
+      });
 
   String get id => Util.stringFromMapNotNull(values, 'id', '');
   set id(String value) => values['id'] = value;
@@ -36,5 +53,5 @@ class ProdutoAdapter extends TransformModelAdapter<Produto> {
 }
 
 class ProdutoObject extends TransformObject<Produto> {
-  ProdutoObject({required super.dataBase}) : super(model: ProdutoModel(), adapter: ProdutoAdapter());
+  ProdutoObject() : super(model: ProdutoModel(), adapter: ProdutoAdapter());
 }

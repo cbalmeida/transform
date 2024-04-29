@@ -1,32 +1,40 @@
+import 'package:testeexemplo/src/params/server_params.dart';
+import 'package:testeexemplo/src/usecases/usecases.dart';
 import 'package:testeexemplo/src/webserver/webserver.dart';
 import 'package:transform/transform.dart';
 
 import '../generated/generated.dart';
-import '../generated/objects/objects_mix_in.dart';
-import 'database/postgres.dart';
 
-class Transform extends TransformServer with ObjectsMixIn {
-  Transform._({required super.database, required super.webserver, required super.objects});
-
-  static Transform? _instance;
-
-  static Transform get instance {
-    if (_instance == null) {
-      throw Exception("Server not started!");
-    }
-    return _instance!;
-  }
+class Transform {
+  Transform._();
 
   static Future<void> start() async {
     try {
-      _instance = _newInstance;
+      TransformInjector injector = TransformInjector();
+
+      UseCases.register(injector);
+      Objects.register(injector);
+
+      TransformDatabase database = TransformDatabase.fromParams(await ServerParams.databaseParams);
+      injector.addInstance<TransformDatabase>(database);
+      for (TransformObject object in Objects.objects) {
+        database.registerTable(object.model.databaseTable);
+      }
+
+      TransformWebServer webServer = WebServer(apis: Apis(injector).all, params: await ServerParams.webServerParams);
+      injector.addInstance<TransformWebServer>(webServer);
+
+      TransformJWT jwt = TransformJWT.fromParams(await ServerParams.jwtParams);
+      injector.addInstance<TransformJWT>(jwt);
+
+      injector.commit();
 
       Util.log("============ Database ============");
-      TransformEither<Exception, bool> databaseStartResult = await instance.database.start();
+      TransformEither<Exception, bool> databaseStartResult = await database.start();
       if (databaseStartResult.isLeft) throw databaseStartResult.left;
 
       Util.log("============ Webserver ============");
-      TransformEither<Exception, bool> webServerStartResult = await instance.webserver.start();
+      TransformEither<Exception, bool> webServerStartResult = await webServer.start();
       if (webServerStartResult.isLeft) throw webServerStartResult.left;
 
       Util.log("============ Server ============");
@@ -35,16 +43,4 @@ class Transform extends TransformServer with ObjectsMixIn {
       Util.logError("Error starting server:\n$e");
     }
   }
-
-  static Transform get _newInstance {
-    TransformDatabase dataBase = DatabasePostgres();
-    TransformWebServer webServer = WebServer();
-    List<TransformObject> objects = Objects.all(dataBase);
-    return Transform._(webserver: webServer, database: dataBase, objects: objects);
-  }
-
-  late final Map<Type, TransformObject> _objectsMap = Map.fromEntries(objects.map((e) => MapEntry(e.runtimeType, e)));
-
-  @override
-  T get<T extends TransformObject>() => _objectsMap[T] as T;
 }

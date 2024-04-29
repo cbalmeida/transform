@@ -1,46 +1,50 @@
 import '../../transform.dart';
 
 class TransformObject<S extends TransformMapped> {
-  final TransformDatabase dataBase;
   final TransformModel model;
   final TransformModelAdapter<S> adapter;
 
-  TransformObject({required this.dataBase, required this.model, required this.adapter}) {
-    dataBase.registerTable(model.databaseTable);
+  TransformObject({required this.model, required this.adapter}) {
+    objects.add(this);
   }
 
-  TransformObjectSelect<S> get select => TransformObjectSelect<S>(dataBase: dataBase, model: model, adapter: adapter);
+  static final List<TransformObject> objects = [];
 
-  TransformObjectCount<S> get count => TransformObjectCount<S>(dataBase: dataBase, model: model, adapter: adapter);
+  TransformDatabaseColumn columnByName(String name) => model.databaseTable.columnByName(name);
 
-  TransformObjectInsert<S> get insert => TransformObjectInsert<S>(dataBase: dataBase, model: model, adapter: adapter);
+  TransformObjectSelect<S> get select => TransformObjectSelect<S>(model: model, adapter: adapter);
 
-  TransformObjectUpsert<S> get upsert => TransformObjectUpsert<S>(dataBase: dataBase, model: model, adapter: adapter);
+  TransformObjectCount<S> get count => TransformObjectCount<S>(model: model, adapter: adapter);
 
-  TransformObjectUpdate<S> get update => TransformObjectUpdate<S>(dataBase: dataBase, model: model, adapter: adapter);
+  TransformObjectInsert<S> get insert => TransformObjectInsert<S>(model: model, adapter: adapter);
+
+  TransformObjectUpsert<S> get upsert => TransformObjectUpsert<S>(model: model, adapter: adapter);
+
+  TransformObjectUpdate<S> get update => TransformObjectUpdate<S>(model: model, adapter: adapter);
 }
 
 class TransformObjectSelect<S extends TransformMapped> {
-  final TransformDatabase dataBase;
   final TransformModel model;
   final TransformModelAdapter<S> adapter;
 
-  TransformObjectSelect({required this.dataBase, required this.model, required this.adapter});
+  TransformObjectSelect({required this.model, required this.adapter});
 
-  TransformDatabaseQueryBuilderSelect<S> builder() => TransformDatabaseQueryBuilderSelect<S>(adapter)..from(model.name);
+  TransformDatabaseQueryBuilderSelect<S> builder() => TransformDatabaseQueryBuilderSelect<S>(adapter)..from(model.databaseTable);
 
-  TransformDatabaseQueryBuilderSelect<S> where(Map<String, dynamic> whereValues) {
-    final builder = this.builder();
-    builder.from(model.name);
-    List<TransformDatabaseQueryBuilderCondition> conditions = whereValues.entries.map((e) => TransformDatabaseQueryBuilderCondition.equals(e.key, e.value)).toList();
-    for (int i = 0; i < conditions.length; i++) {
-      if (i == 0) {
-        builder.where(conditions[i]);
-      } else {
-        builder.and(conditions[i]);
-      }
+  TransformDatabaseQueryBuilderSelect<S> wherePrimaryKey(Map<String, dynamic> primaryKeyValues) {
+    List<TransformDatabaseQueryBuilderCondition> conditions = model.databaseTable.primaryKeyConditions(primaryKeyValues);
+    TransformDatabaseQueryBuilderSelect<S> builder = where(conditions[0]);
+    for (int i = 1; i < conditions.length; i++) {
+      builder.and(conditions[i]);
     }
-    List<TransformDatabaseQueryBuilderOrderBy> orderBy = whereValues.keys.map((e) => TransformDatabaseQueryBuilderOrderBy.asc(e)).toList();
+    return builder;
+  }
+
+  TransformDatabaseQueryBuilderSelect<S> where(TransformDatabaseQueryBuilderCondition condition) {
+    final builder = this.builder();
+    builder.from(model.databaseTable);
+    builder.where(condition);
+    List<TransformDatabaseQueryBuilderOrderBy> orderBy = model.databaseTable.primaryKeyColumns.map((e) => TransformDatabaseQueryBuilderOrderBy.asc(e.name)).toList();
     builder.orderBy(orderBy);
     builder.limit(1);
     return builder;
@@ -48,16 +52,19 @@ class TransformObjectSelect<S extends TransformMapped> {
 
   TransformDatabaseQueryBuilderSelect<S> all() {
     final builder = this.builder();
-    builder.from(model.name);
+    builder.from(model.databaseTable);
     return builder;
   }
 }
 
-class TransformObjectCount<S extends TransformMapped> extends TransformObject<S> {
-  TransformObjectCount({required super.dataBase, required super.model, required super.adapter});
+class TransformObjectCount<S extends TransformMapped> {
+  final TransformModel model;
+  final TransformModelAdapter<S> adapter;
+
+  TransformObjectCount({required this.model, required this.adapter});
 
   TransformDatabaseQueryBuilderSelect<int> builder() => TransformDatabaseQueryBuilderSelect<int>(TransformModelAdapterCount())
-    ..from(model.name)
+    ..from(model.databaseTable)
     ..columns(["count(*) as count"]);
 
   TransformDatabaseQueryBuilderSelect<int> all() {
@@ -66,8 +73,11 @@ class TransformObjectCount<S extends TransformMapped> extends TransformObject<S>
   }
 }
 
-class TransformObjectInsert<S extends TransformMapped> extends TransformObject<S> {
-  TransformObjectInsert({required super.dataBase, required super.model, required super.adapter});
+class TransformObjectInsert<S extends TransformMapped> {
+  final TransformModel model;
+  final TransformModelAdapter<S> adapter;
+
+  TransformObjectInsert({required this.model, required this.adapter});
 
   TransformDatabaseQueryBuilderInsert<S> builder() => TransformDatabaseQueryBuilderInsert<S>(adapter)..into(model.databaseTable);
 
@@ -78,8 +88,11 @@ class TransformObjectInsert<S extends TransformMapped> extends TransformObject<S
   }
 }
 
-class TransformObjectUpsert<S extends TransformMapped> extends TransformObject<S> {
-  TransformObjectUpsert({required super.dataBase, required super.model, required super.adapter});
+class TransformObjectUpsert<S extends TransformMapped> {
+  final TransformModel model;
+  final TransformModelAdapter<S> adapter;
+
+  TransformObjectUpsert({required this.model, required this.adapter});
 
   TransformDatabaseQueryBuilderUpsert<S> builder() => TransformDatabaseQueryBuilderUpsert<S>(adapter)..into(model.databaseTable);
 
@@ -91,17 +104,16 @@ class TransformObjectUpsert<S extends TransformMapped> extends TransformObject<S
 }
 
 class TransformObjectUpdate<S extends TransformMapped> {
-  final TransformDatabase dataBase;
   final TransformModel model;
   final TransformModelAdapter<S> adapter;
 
-  TransformObjectUpdate({required this.dataBase, required this.model, required this.adapter});
+  TransformObjectUpdate({required this.model, required this.adapter});
 
-  TransformDatabaseQueryBuilderUpdate<S> builder() => TransformDatabaseQueryBuilderUpdate<S>(adapter)..table(model.name);
+  TransformDatabaseQueryBuilderUpdate<S> builder() => TransformDatabaseQueryBuilderUpdate<S>(adapter)..table(model.databaseTable);
 
   TransformDatabaseQueryBuilderUpdate<S> where(Map<String, dynamic> whereValues) {
     final builder = this.builder();
-    builder.table(model.name);
+    builder.table(model.databaseTable);
     List<TransformDatabaseQueryBuilderCondition> conditions = whereValues.entries.map((e) => TransformDatabaseQueryBuilderCondition.equals(e.key, e.value)).toList();
     for (int i = 0; i < conditions.length; i++) {
       if (i == 0) {
@@ -115,7 +127,7 @@ class TransformObjectUpdate<S extends TransformMapped> {
 
   TransformDatabaseQueryBuilderUpdate<S> set(S value) {
     final builder = this.builder();
-    builder.table(model.name);
+    builder.table(model.databaseTable);
     builder.set(adapter.toMap(value));
     Map<String, dynamic> mappedValues = adapter.toMap(value);
     Map<String, dynamic> whereValues = {};
@@ -136,17 +148,16 @@ class TransformObjectUpdate<S extends TransformMapped> {
 }
 
 class TransformObjectDelete<S extends TransformMapped> {
-  final TransformDatabase dataBase;
   final TransformModel model;
   final TransformModelAdapter<S> adapter;
 
-  TransformObjectDelete({required this.dataBase, required this.model, required this.adapter});
+  TransformObjectDelete({required this.model, required this.adapter});
 
-  TransformDatabaseQueryBuilderDelete<S> builder() => TransformDatabaseQueryBuilderDelete<S>(adapter)..from(model.name);
+  TransformDatabaseQueryBuilderDelete<S> builder() => TransformDatabaseQueryBuilderDelete<S>(adapter)..from(model.databaseTable);
 
   TransformDatabaseQueryBuilderDelete<S> where(Map<String, dynamic> whereValues) {
     final builder = this.builder();
-    builder.from(model.name);
+    builder.from(model.databaseTable);
     List<TransformDatabaseQueryBuilderCondition> conditions = whereValues.entries.map((e) => TransformDatabaseQueryBuilderCondition.equals(e.key, e.value)).toList();
     for (int i = 0; i < conditions.length; i++) {
       if (i == 0) {
@@ -160,7 +171,7 @@ class TransformObjectDelete<S extends TransformMapped> {
 
   TransformDatabaseQueryBuilderDelete<S> value(S value) {
     final builder = this.builder();
-    builder.from(model.name);
+    builder.from(model.databaseTable);
     Map<String, dynamic> mappedValues = adapter.toMap(value);
     Map<String, dynamic> whereValues = {};
     for (TransformModelColumn column in model.primaryKeyColumns) {

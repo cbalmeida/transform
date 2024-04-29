@@ -12,9 +12,9 @@ class TransformDatabaseQueryBuilderUpdate<S> extends TransformDatabaseQueryBuild
     return this;
   }
 
-  String? _table;
+  TransformDatabaseTable? _table;
 
-  TransformDatabaseQueryBuilderUpdate table(String table) {
+  TransformDatabaseQueryBuilderUpdate table(TransformDatabaseTable table) {
     _table = table;
     return this;
   }
@@ -40,7 +40,7 @@ class TransformDatabaseQueryBuilderUpdate<S> extends TransformDatabaseQueryBuild
 
   @override
   String asSql(TransformDatabaseType databaseType) {
-    String tableSql = _table ?? "";
+    String tableSql = _table?.sql ?? "";
     List<String> values = _values!.entries.map((e) => "${e.key} = ${e.value}").toList();
     String setSql = values.join(", ");
     String whereSql = _where == null ? "" : "where ${_where!.sql}";

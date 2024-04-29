@@ -37,7 +37,22 @@ class TransformDatabaseTable {
     }
   }
 
+  String get sql => schema.isNotEmpty ? "$schema.$name" : name;
+
   List<TransformDatabaseColumn> get primaryKeyColumns => columns.where((element) => element.isPrimaryKey).toList();
+
+  TransformDatabaseColumn columnByName(String name) => columns.firstWhere((element) => element.name.toLowerCase() == name.toLowerCase());
+
+  List<TransformDatabaseQueryBuilderCondition> primaryKeyConditions(Map<String, dynamic> primaryKeyValues) {
+    List<TransformDatabaseQueryBuilderCondition> conditions = [];
+    for (TransformDatabaseColumn column in primaryKeyColumns) {
+      if (!primaryKeyValues.containsKey(column.name)) {
+        throw Exception("Invalid primary key values! Expected key: ${column.name}");
+      }
+      conditions.add(TransformDatabaseQueryBuilderCondition.equals(column, column.convertValue(primaryKeyValues[column.name])));
+    }
+    return conditions;
+  }
 
   Future<TransformEither<Exception, bool>> exists(TransformDatabaseSession session) => session.tableExists(this);
 

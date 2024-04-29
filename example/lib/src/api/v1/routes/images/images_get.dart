@@ -22,12 +22,17 @@ class ImagesGetRouteOutput extends TransformRouteOutputFileStream {
 }
 
 class ImagesGetRouteHandler extends TransformRouteHandler<ImagesGetRouteInput, ImagesGetRouteOutput> {
+  ImagesGetRouteHandler({required super.jwt});
+
+  factory ImagesGetRouteHandler.create(TransformInjector injector) {
+    return ImagesGetRouteHandler(jwt: injector.get());
+  }
+
   @override
   ImagesGetRouteInput inputFromParams(Map<String, dynamic> params) => ImagesGetRouteInput.fromMap(params);
 
   @override
-  Future<TransformRouteResponse<ImagesGetRouteOutput>> handler(ImagesGetRouteInput input) async {
-    // verifica se todos os parametros foram informados
+  Future<TransformRouteResponse<ImagesGetRouteOutput>> handler(ImagesGetRouteInput input, TransformJWTPayload tokenPayload) async {
     if (input.fileName == null) return TransformRouteResponse.badRequest("'file_name' is required!");
 
     File file = File("images/${input.fileName}");
@@ -39,10 +44,14 @@ class ImagesGetRouteHandler extends TransformRouteHandler<ImagesGetRouteInput, I
 }
 
 class ImagesGetRoute extends TransformRoute<ImagesGetRouteInput, ImagesGetRouteOutput> {
-  ImagesGetRoute()
-      : super(
-          method: TransformRouteMethod.get,
-          path: '/images/<file_name>',
-          handler: ImagesGetRouteHandler(),
-        );
+  ImagesGetRoute(super.injector);
+
+  @override
+  TransformRouteHandler<ImagesGetRouteInput, ImagesGetRouteOutput> get handler => ImagesGetRouteHandler.create(injector);
+
+  @override
+  TransformRouteMethod get method => TransformRouteMethod.get;
+
+  @override
+  String get path => '/images/<file_name>';
 }

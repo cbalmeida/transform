@@ -5,9 +5,9 @@ class TransformDatabaseQueryBuilderDelete<S> extends TransformDatabaseQueryBuild
 
   TransformDatabaseQueryBuilderDelete(this.adapter);
 
-  String? _from;
+  TransformDatabaseTable? _from;
 
-  TransformDatabaseQueryBuilderDelete from(String from) {
+  TransformDatabaseQueryBuilderDelete from(TransformDatabaseTable from) {
     _from = from;
     return this;
   }
@@ -33,7 +33,7 @@ class TransformDatabaseQueryBuilderDelete<S> extends TransformDatabaseQueryBuild
 
   @override
   String asSql(TransformDatabaseType databaseType) {
-    String fromSql = _from == null ? "" : "from $_from";
+    String fromSql = _from == null ? "" : "from ${_from!.sql}";
     String whereSql = _where == null ? "" : "where ${_where!.sql}";
     String sql = "delete  \n  $fromSql  \n  $whereSql ";
     return sql;

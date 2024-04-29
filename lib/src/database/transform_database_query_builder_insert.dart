@@ -22,7 +22,7 @@ class TransformDatabaseQueryBuilderInsert<S> extends TransformDatabaseQueryBuild
   @override
   String asSql(TransformDatabaseType databaseType) {
     List<String> columns = _columns?.map((e) => e.name).toList() ?? _table?.columns.map((e) => e.name).toList() ?? [];
-    String tableName = _table?.name ?? "";
+    String tableName = _table?.sql ?? "";
     String columnsSql = (columns).join(", ");
     String valuesSql = columns.map((e) => "@$e").join(", ");
     String sql = "insert into $tableName ($columnsSql) values ($valuesSql) returning *";

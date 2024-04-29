@@ -3,11 +3,13 @@ import 'package:shelf_router/shelf_router.dart';
 import '../../transform.dart';
 
 abstract class TransformApi {
+  final TransformInjector injector;
+
+  TransformApi(this.injector);
+
   int get version;
 
   List<TransformRoute> get routes;
-
-  TransformApi();
 
   Router get router {
     final router = Router();

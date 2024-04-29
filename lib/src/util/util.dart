@@ -32,4 +32,8 @@ class Util {
   static void logError(String message, {DateTime? time, Object? error, StackTrace? stackTrace}) => LogUtil.e(message, time: time, error: error, stackTrace: stackTrace);
 
   static void log(String message, {DateTime? time, Object? error, StackTrace? stackTrace}) => LogUtil.log(message);
+
+  static String hashPassword(String password) => BCrypt.hashpw(password, BCrypt.gensalt());
+
+  static bool checkPassword(String password, String hashedPassword) => BCrypt.checkpw(password, hashedPassword);
 }
