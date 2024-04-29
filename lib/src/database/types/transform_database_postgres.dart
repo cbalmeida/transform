@@ -218,6 +218,14 @@ class TransformDatabaseSessionPostgres extends TransformDatabaseSession {
         if (resultExecute.isLeft) throw resultExecute.left;
       }
 
+      // initial data
+      List<TransformMapped> initialData = table.initialData;
+      for (TransformMapped mapped in initialData) {
+        query = "insert into ${table.schema}.${table.name} (${mapped.values.keys.join(", ")}) values (${mapped.values.keys.map((key) => "@$key").join(", ")}) on conflict do nothing";
+        final resultExecute = await execute(query, parameters: mapped.values);
+        if (resultExecute.isLeft) throw resultExecute.left;
+      }
+
       return Right(true);
     } on Exception catch (e) {
       return Left(Exception("Error executing createTable: ${table.name}\n$e"));

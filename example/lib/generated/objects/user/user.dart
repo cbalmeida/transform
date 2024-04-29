@@ -5,6 +5,9 @@ import '../../../src/models/user/user_model.dart';
 class User extends TransformMapped {
   User({required super.values});
 
+  @override
+  List<String> get primaryKeyColumns => ['id'];
+
   String get id => Util.stringFromMapNotNull(values, 'id', '');
   set id(String value) => values['id'] = value;
 

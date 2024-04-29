@@ -1,7 +1,9 @@
-import 'package:transform/src/database/transform_database.dart';
+import '../../transform.dart';
 
 abstract class TransformUseCase<T> {
-  final TransformDatabase database;
+  final TransformDatabaseParams databaseParams;
 
-  TransformUseCase({required this.database});
+  TransformUseCase({required this.databaseParams});
+
+  TransformDatabase get database => TransformDatabase.fromParams(databaseParams);
 }

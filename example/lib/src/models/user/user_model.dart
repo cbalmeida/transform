@@ -1,5 +1,7 @@
 import 'package:transform/transform.dart';
 
+import '../../../generated/objects/user/user.dart';
+
 class UserModel extends TransformModel {
   @override
   String get name => "user";
@@ -17,5 +19,10 @@ class UserModel extends TransformModel {
   @override
   List<TransformModelIndex> get indexes => [
         TransformModelIndex(name: "user_email", columnNames: ["email"], isUnique: false),
+      ];
+
+  @override
+  List<User> get initialData => [
+        User.fromEmailPassword('admin@admin.com', 'admin'),
       ];
 }

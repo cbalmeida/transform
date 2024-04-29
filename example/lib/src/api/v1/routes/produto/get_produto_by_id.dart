@@ -36,18 +36,19 @@ class GetProdutoByIdRouteHandler extends TransformRouteHandler<GetProdutoByIdRou
   GetProdutoByIdRouteInput inputFromParams(Map<String, dynamic> params) => GetProdutoByIdRouteInput.fromMap(params);
 
   @override
-  TransformEither<Exception, TransformJWTPayload> decodeToken(String token) => jwt.decodeToken(token);
+  bool get checkToken => false;
 
   @override
-  Future<TransformRouteResponse<GetProdutoByIdRouteOutput>> handler(GetProdutoByIdRouteInput input, TransformJWTPayload tokenPayload) async {
-    if (input.id == null) return TransformRouteResponse.badRequest("'id' is required!");
+  Future<TransformRouteResponse<GetProdutoByIdRouteOutput>> handler(TransformRouteHandlerInputs input) async {
+    if (input.params.id == null) return TransformRouteResponse.badRequest("'id' is required!");
+    String id = input.params.id!;
 
-    TransformEither<Exception, Produto?> result = await getProdutoByIdUseCase(id: input.id!);
+    TransformEither<Exception, Produto?> result = await getProdutoByIdUseCase(id: id);
 
     if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);
     Produto? produto = result.right;
 
-    if (produto == null) return TransformRouteResponse.notFound("id ${input.id} not found!");
+    if (produto == null) return TransformRouteResponse.notFound("id $id not found!");
 
     GetProdutoByIdRouteOutput output = GetProdutoByIdRouteOutput(produto: produto);
     return TransformRouteResponse.ok(output);

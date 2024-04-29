@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -70,9 +71,11 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
       }
 
       final I input = handler.inputFromParams(params);
-      final routeResponse = await handler.handler(input, tokenPayload ?? TransformJWTPayload.empty());
-      Response response = routeResponse.toResponse();
-      return response;
+      final TransformRouteHandlerInputs<I> handlerInputs = TransformRouteHandlerInputs(params: input, tokenPayload: tokenPayload ?? TransformJWTPayload.empty());
+      return Isolate.run(() => handler.handler(handlerInputs)).then((TransformRouteResponse<O> routeResponse) {
+        Response response = routeResponse.toResponse();
+        return response;
+      });
     } catch (e) {
       return Response.internalServerError(body: e.toString());
     }

@@ -37,6 +37,7 @@ abstract class TransformModel {
         schema: schema,
         columns: columns.map((e) => e.databaseColumn).toList(),
         indexes: indexes.map((e) => e.databaseIndex).toList(),
+        initialData: initialData,
       );
 
   List<TransformModelColumn> get primaryKeyColumns => columns.where((element) => element.isPrimaryKey).toList();
@@ -47,4 +48,6 @@ abstract class TransformModel {
     }
     throw Exception("Column not found: $name");
   }
+
+  List<TransformMapped> get initialData => [];
 }

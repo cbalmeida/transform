@@ -39,11 +39,11 @@ class PostSignInRouteHandler extends TransformRouteHandler<PostSignInRouteInput,
   bool get checkToken => false;
 
   @override
-  Future<TransformRouteResponse<PostSignInRouteOutput>> handler(PostSignInRouteInput input, TransformJWTPayload tokenPayload) async {
-    if (input.email == null) return TransformRouteResponse.badRequest("'email' is required!");
-    if (input.password == null) return TransformRouteResponse.badRequest("'password' is required!");
+  Future<TransformRouteResponse<PostSignInRouteOutput>> handler(TransformRouteHandlerInputs input) async {
+    if (input.params.email == null) return TransformRouteResponse.badRequest("'email' is required!");
+    if (input.params.password == null) return TransformRouteResponse.badRequest("'password' is required!");
 
-    TransformEither<Exception, String> result = await signinUserUseCase(email: input.email!, password: input.password!);
+    TransformEither<Exception, String> result = await signinUserUseCase(email: input.params.email!, password: input.params.password!);
     if (result.isLeft) {
       if (result.left is SigninUserUseCaseExceptionUserNotFound) return TransformRouteResponse.unauthorized("User not found");
       if (result.left is SigninUserUseCaseExceptionInvalidPassword) return TransformRouteResponse.unauthorized("Invalid password");

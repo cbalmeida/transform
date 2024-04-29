@@ -58,16 +58,16 @@ class PostProdutoRouteHandler extends TransformRouteHandler<PostProdutoRouteInpu
   PostProdutoRouteInput inputFromParams(Map<String, dynamic> params) => PostProdutoRouteInput.fromMap(params);
 
   @override
-  Future<TransformRouteResponse<PostProdutoRouteOutput>> handler(PostProdutoRouteInput input, TransformJWTPayload tokenPayload) async {
-    if (input.nome == null) return TransformRouteResponse.badRequest("'nome' is required!");
+  Future<TransformRouteResponse<PostProdutoRouteOutput>> handler(TransformRouteHandlerInputs input) async {
+    if (input.params.nome == null) return TransformRouteResponse.badRequest("'nome' is required!");
 
     TransformEither<Exception, Produto> result = await createProdutoUseCase(
-      nome: input.nome,
-      preco: input.preco,
-      quantidade: input.quantidade,
-      vencimento: input.vencimento,
-      ativo: input.ativo,
-      dimensoes: input.dimensoes,
+      nome: input.params.nome,
+      preco: input.params.preco,
+      quantidade: input.params.quantidade,
+      vencimento: input.params.vencimento,
+      ativo: input.params.ativo,
+      dimensoes: input.params.dimensoes,
     );
 
     if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);

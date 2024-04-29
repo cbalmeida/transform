@@ -22,6 +22,9 @@ class Produto extends TransformMapped {
         'dimensoes': dimensoes,
       });
 
+  @override
+  List<String> get primaryKeyColumns => ['id'];
+
   String get id => Util.stringFromMapNotNull(values, 'id', '');
   set id(String value) => values['id'] = value;
 

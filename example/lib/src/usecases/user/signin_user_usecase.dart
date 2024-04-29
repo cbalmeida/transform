@@ -6,7 +6,7 @@ class SigninUserUseCase extends TransformUseCase<User> {
   final UserObject userObject;
   final TransformJWT jwt;
 
-  SigninUserUseCase({required this.userObject, required this.jwt, required super.database});
+  SigninUserUseCase({required this.userObject, required this.jwt, required super.databaseParams});
 
   @override
   Future<TransformEither<Exception, String>> call({required String email, required String password}) {

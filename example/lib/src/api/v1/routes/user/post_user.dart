@@ -49,12 +49,12 @@ class PostUserRouteHandler extends TransformRouteHandler<PostUserRouteInput, Pos
   TransformEither<Exception, TransformJWTPayload> decodeToken(String token) => Right(TransformJWTPayload(userId: ''));
 
   @override
-  Future<TransformRouteResponse<PostUserRouteOutput>> handler(PostUserRouteInput input, TransformJWTPayload tokenPayload) async {
+  Future<TransformRouteResponse<PostUserRouteOutput>> handler(TransformRouteHandlerInputs input) async {
     // verifica se todos os parametros foram informados
-    if (input.email == null) return TransformRouteResponse.badRequest("'email' is required!");
-    if (input.password == null) return TransformRouteResponse.badRequest("'password' is required!");
+    if (input.params.email == null) return TransformRouteResponse.badRequest("'email' is required!");
+    if (input.params.password == null) return TransformRouteResponse.badRequest("'password' is required!");
 
-    TransformEither<Exception, User> result = await createUserUseCase(email: input.email!, password: input.password!);
+    TransformEither<Exception, User> result = await createUserUseCase(email: input.params.email!, password: input.params.password!);
 
     // se houve algum erro na transacao, retorna um erro interno
     if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);

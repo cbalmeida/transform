@@ -35,7 +35,10 @@ class GetProdutoAllRouteHandler extends TransformRouteHandler<GetProdutoAllRoute
   GetProdutoAllRouteInput inputFromParams(Map<String, dynamic> params) => GetProdutoAllRouteInput.fromMap(params);
 
   @override
-  Future<TransformRouteResponse<GetProdutoAllRouteOutput>> handler(GetProdutoAllRouteInput input, TransformJWTPayload tokenPayload) async {
+  bool get checkToken => false;
+
+  @override
+  Future<TransformRouteResponse<GetProdutoAllRouteOutput>> handler(TransformRouteHandlerInputs input) async {
     TransformEither<Exception, List<Produto>> result = await getProdutoAllUseCase();
 
     if (result.isLeft) return TransformRouteResponse.internalServerError(result.left);

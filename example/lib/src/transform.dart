@@ -15,25 +15,27 @@ class Transform {
       UseCases.register(injector);
       Objects.register(injector);
 
-      TransformDatabase database = TransformDatabase.fromParams(await ServerParams.databaseParams);
-      injector.addInstance<TransformDatabase>(database);
-      for (TransformObject object in Objects.objects) {
-        database.registerTable(object.model.databaseTable);
-      }
-
-      TransformWebServer webServer = WebServer(apis: Apis(injector).all, params: await ServerParams.webServerParams);
-      injector.addInstance<TransformWebServer>(webServer);
+      TransformDatabaseParams databaseParams = await ServerParams.databaseParams;
+      injector.addInstance<TransformDatabaseParams>(databaseParams);
 
       TransformJWT jwt = TransformJWT.fromParams(await ServerParams.jwtParams);
       injector.addInstance<TransformJWT>(jwt);
 
+      TransformWebServerParams webServerParams = await ServerParams.webServerParams;
+      injector.addInstance<TransformWebServerParams>(webServerParams);
+
       injector.commit();
 
       Util.log("============ Database ============");
+      TransformDatabase database = TransformDatabase.fromParams(databaseParams);
+      for (TransformObject object in Objects.objects) {
+        database.registerTable(object.model.databaseTable);
+      }
       TransformEither<Exception, bool> databaseStartResult = await database.start();
       if (databaseStartResult.isLeft) throw databaseStartResult.left;
 
       Util.log("============ Webserver ============");
+      TransformWebServer webServer = WebServer(apis: Apis(injector).all, params: webServerParams);
       TransformEither<Exception, bool> webServerStartResult = await webServer.start();
       if (webServerStartResult.isLeft) throw webServerStartResult.left;
 

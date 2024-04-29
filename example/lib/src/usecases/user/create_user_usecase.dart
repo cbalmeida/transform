@@ -5,7 +5,7 @@ import '../../../generated/generated.dart';
 class CreateUserUseCase extends TransformUseCase<User> {
   final UserObject userObject;
 
-  CreateUserUseCase({required this.userObject, required super.database});
+  CreateUserUseCase({required this.userObject, required super.databaseParams});
 
   @override
   Future<TransformEither<Exception, User>> call({required String email, required String password}) {

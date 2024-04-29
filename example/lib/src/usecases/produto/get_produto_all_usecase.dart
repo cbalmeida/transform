@@ -5,7 +5,7 @@ import '../../../generated/generated.dart';
 class GetProdutoAllUseCase extends TransformUseCase<User> {
   final ProdutoObject produtoObject;
 
-  GetProdutoAllUseCase({required this.produtoObject, required super.database});
+  GetProdutoAllUseCase({required this.produtoObject, required super.databaseParams});
 
   @override
   Future<TransformEither<Exception, List<Produto>>> call() {

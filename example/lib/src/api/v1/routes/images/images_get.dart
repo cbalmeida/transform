@@ -32,11 +32,12 @@ class ImagesGetRouteHandler extends TransformRouteHandler<ImagesGetRouteInput, I
   ImagesGetRouteInput inputFromParams(Map<String, dynamic> params) => ImagesGetRouteInput.fromMap(params);
 
   @override
-  Future<TransformRouteResponse<ImagesGetRouteOutput>> handler(ImagesGetRouteInput input, TransformJWTPayload tokenPayload) async {
-    if (input.fileName == null) return TransformRouteResponse.badRequest("'file_name' is required!");
+  Future<TransformRouteResponse<ImagesGetRouteOutput>> handler(TransformRouteHandlerInputs<ImagesGetRouteInput> input) async {
+    if (input.params.fileName == null) return TransformRouteResponse.badRequest("'file_name' is required!");
+    String fileName = input.params.fileName!;
 
-    File file = File("images/${input.fileName}");
-    if (!file.existsSync()) return TransformRouteResponse.notFound("file ${input.fileName} not found!");
+    File file = File("images/$fileName");
+    if (!file.existsSync()) return TransformRouteResponse.notFound("file $fileName not found!");
 
     ImagesGetRouteOutput output = ImagesGetRouteOutput(file: file);
     return TransformRouteResponse.ok(output);
