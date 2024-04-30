@@ -36,9 +36,6 @@ class GetProdutoByIdRouteHandler extends TransformRouteHandler<GetProdutoByIdRou
   GetProdutoByIdRouteInput inputFromParams(Map<String, dynamic> params) => GetProdutoByIdRouteInput.fromMap(params);
 
   @override
-  bool get checkToken => false;
-
-  @override
   Future<TransformRouteResponse<GetProdutoByIdRouteOutput>> handler(TransformRouteHandlerInputs input) async {
     if (input.params.id == null) return TransformRouteResponse.badRequest("'id' is required!");
     String id = input.params.id!;

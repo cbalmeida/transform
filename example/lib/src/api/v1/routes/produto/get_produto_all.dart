@@ -35,9 +35,6 @@ class GetProdutoAllRouteHandler extends TransformRouteHandler<GetProdutoAllRoute
   GetProdutoAllRouteInput inputFromParams(Map<String, dynamic> params) => GetProdutoAllRouteInput.fromMap(params);
 
   @override
-  bool get checkToken => false;
-
-  @override
   Future<TransformRouteResponse<GetProdutoAllRouteOutput>> handler(TransformRouteHandlerInputs input) async {
     TransformEither<Exception, List<Produto>> result = await getProdutoAllUseCase();
 

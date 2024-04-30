@@ -72,10 +72,7 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
 
       final I input = handler.inputFromParams(params);
       final TransformRouteHandlerInputs<I> handlerInputs = TransformRouteHandlerInputs(params: input, tokenPayload: tokenPayload ?? TransformJWTPayload.empty());
-      return Isolate.run(() => handler.handler(handlerInputs)).then((TransformRouteResponse<O> routeResponse) {
-        Response response = routeResponse.toResponse();
-        return response;
-      });
+      return Isolate.run(() => handler.handler(handlerInputs)).then((value) => value.toResponse());
     } catch (e) {
       return Response.internalServerError(body: e.toString());
     }
