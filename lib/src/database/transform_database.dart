@@ -10,7 +10,7 @@ abstract class TransformDatabase {
   TransformDatabaseType get type;
 
   Future<TransformEither<Exception, bool>> start() async {
-    return transaction<bool>((session) async {
+    return transaction<Exception, bool>((session) async {
       try {
         Util.log("  Checking Database connection...");
         TransformEither<Exception, bool> resultCheckDatabaseConnection = await session.checkDatabaseConnection();
@@ -24,7 +24,7 @@ abstract class TransformDatabase {
         }
         return Right(true);
       } on Exception catch (e) {
-        return Left(Exception("Error starting Database layer:\n$e"));
+        return Left(e);
       }
     });
   }
@@ -33,7 +33,7 @@ abstract class TransformDatabase {
 
   registerTable(TransformDatabaseTable table) => tables.add(table);
 
-  Future<TransformEither<Exception, R>> transaction<R>(Future<TransformEither<Exception, R>> Function(TransformDatabaseSession session) body);
+  Future<TransformEither<E, R>> transaction<E extends Exception, R>(Future<TransformEither<E, R>> Function(TransformDatabaseSession session) body);
 
   static TransformDatabase postgres(TransformDatabaseParamsPostgres params) => TransformDatabasePostgres(params: params);
 

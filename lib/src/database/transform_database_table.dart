@@ -1,11 +1,12 @@
 import '../../transform.dart';
 
-class TransformDatabaseTable {
+class TransformDatabaseTable<S extends TransformMapped> {
   final String name;
   final String schema;
   final List<TransformDatabaseColumn> columns;
   final List<TransformDatabaseIndex> indexes;
   final List<TransformMapped> initialData;
+  final TransformModelAdapter<S> adapter;
 
   TransformDatabaseTable({
     required this.name,
@@ -13,6 +14,7 @@ class TransformDatabaseTable {
     required this.columns,
     required this.indexes,
     required this.initialData,
+    required this.adapter,
   }) {
     _assertConstructor();
   }
@@ -59,4 +61,16 @@ class TransformDatabaseTable {
   Future<TransformEither<Exception, bool>> exists(TransformDatabaseSession session) => session.tableExists(this);
 
   Future<TransformEither<Exception, bool>> create(TransformDatabaseSession session) => session.createTable(this);
+
+  TransformDatabaseQueryBuilderSelect<S> get select => TransformDatabaseQueryBuilderSelect<S>(adapter)..from(this);
+
+  TransformDatabaseQueryBuilderSelect<int> get count => TransformDatabaseQueryBuilderSelect<int>(TransformModelAdapterCount())
+    ..from(this)
+    ..columns(["count(*) as count"]);
+
+  TransformDatabaseQueryBuilderInsert<S> get insert => TransformDatabaseQueryBuilderInsert<S>(adapter)..into(this);
+
+  TransformDatabaseQueryBuilderUpsert<S> get upsert => TransformDatabaseQueryBuilderUpsert<S>(adapter)..into(this);
+
+  TransformDatabaseQueryBuilderUpdate<S> get update => TransformDatabaseQueryBuilderUpdate<S>(adapter)..into(this);
 }

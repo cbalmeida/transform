@@ -69,10 +69,10 @@ class TransformJWTParamsHS256 extends TransformJWTParams {
       );
 
   factory TransformJWTParamsHS256.fromMap(Map<String, dynamic> map) => TransformJWTParamsHS256(
-        expiresInSeconds: Util.intFromMapNotNull(map, 'JWT_EXPIRES_IN_SECONDS', 3600),
-        issuer: Util.stringFromMapNotNull(map, 'JWT_ISSUER', ''),
-        privateKey: Util.stringFromMapNotNull(map, 'JWT_PRIVATE_KEY', ''),
-        publicKey: Util.stringFromMapNotNull(map, 'JWT_PUBLIC_KEY', ''),
+        expiresInSeconds: map.valueIntNotNull('JWT_EXPIRES_IN_SECONDS', defaultValue: 3600),
+        issuer: map.valueStringNotNull('JWT_ISSUER'),
+        privateKey: map.valueStringNotNull('JWT_PRIVATE_KEY'),
+        publicKey: map.valueStringNotNull('JWT_PUBLIC_KEY'),
       );
 
   factory TransformJWTParamsHS256.fromFiles() {
@@ -118,10 +118,10 @@ class TransformJWTParamsRS256 extends TransformJWTParams {
       );
 
   factory TransformJWTParamsRS256.fromMap(Map<String, dynamic> map) => TransformJWTParamsRS256(
-        expiresInSeconds: Util.intFromMapNotNull(map, 'JWT_EXPIRES_IN_SECONDS', 3600),
-        issuer: Util.stringFromMapNotNull(map, 'JWT_ISSUER', ''),
-        privateKey: Util.stringFromMapNotNull(map, 'JWT_PRIVATE_KEY', ''),
-        publicKey: Util.stringFromMapNotNull(map, 'JWT_PUBLIC_KEY', ''),
+        expiresInSeconds: map.valueIntNotNull('JWT_EXPIRES_IN_SECONDS', defaultValue: 3600),
+        issuer: map.valueStringNotNull('JWT_ISSUER'),
+        privateKey: map.valueStringNotNull('JWT_PRIVATE_KEY'),
+        publicKey: map.valueStringNotNull('JWT_PUBLIC_KEY'),
       );
 
   factory TransformJWTParamsRS256.fromFiles() {
@@ -167,10 +167,10 @@ class TransformJWTParamsES256 extends TransformJWTParams {
       );
 
   factory TransformJWTParamsES256.fromMap(Map<String, dynamic> map) => TransformJWTParamsES256(
-        expiresInSeconds: Util.intFromMapNotNull(map, 'JWT_EXPIRES_IN_SECONDS', 3600),
-        issuer: Util.stringFromMapNotNull(map, 'JWT_ISSUER', ''),
-        privateKey: Util.stringFromMapNotNull(map, 'JWT_PRIVATE_KEY', ''),
-        publicKey: Util.stringFromMapNotNull(map, 'JWT_PUBLIC_KEY', ''),
+        expiresInSeconds: map.valueIntNotNull('JWT_EXPIRES_IN_SECONDS', defaultValue: 3600),
+        issuer: map.valueStringNotNull('JWT_ISSUER'),
+        privateKey: map.valueStringNotNull('JWT_PRIVATE_KEY'),
+        publicKey: map.valueStringNotNull('JWT_PUBLIC_KEY'),
       );
 
   factory TransformJWTParamsES256.fromFiles() {
@@ -216,10 +216,10 @@ class TransformJWTParamsRSACert extends TransformJWTParams {
       );
 
   factory TransformJWTParamsRSACert.fromMap(Map<String, dynamic> map) => TransformJWTParamsRSACert(
-        expiresInSeconds: Util.intFromMapNotNull(map, 'JWT_EXPIRES_IN_SECONDS', 3600),
-        issuer: Util.stringFromMapNotNull(map, 'JWT_ISSUER', ''),
-        privateKey: Util.stringFromMapNotNull(map, 'JWT_PRIVATE_KEY', ''),
-        publicKey: Util.stringFromMapNotNull(map, 'JWT_PUBLIC_KEY', ''),
+        expiresInSeconds: map.valueIntNotNull('JWT_EXPIRES_IN_SECONDS', defaultValue: 3600),
+        issuer: map.valueStringNotNull('JWT_ISSUER'),
+        privateKey: map.valueStringNotNull('JWT_PRIVATE_KEY'),
+        publicKey: map.valueStringNotNull('JWT_PUBLIC_KEY'),
       );
 
   factory TransformJWTParamsRSACert.fromFiles() {

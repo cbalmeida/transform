@@ -1,7 +1,12 @@
-abstract class TransformMapped {
-  final Map<String, dynamic> values;
+import '../../transform.dart';
+
+abstract class TransformMapped extends TransformEncodable {
+  const TransformMapped();
 
   List<String> get primaryKeyColumns;
 
-  TransformMapped({required this.values});
+  Map<String, dynamic> toMap();
+
+  @override
+  String? get encodedValue => TransformEncodable.fromMap(toMap()).encodedValue;
 }

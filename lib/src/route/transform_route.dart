@@ -57,21 +57,20 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
 
   Future<Response> _handleRequest(Request request) async {
     try {
+      final responseMaxRequests = handler.checkMaxRequests(request);
+      if (responseMaxRequests != null) return responseMaxRequests;
+
       final Map<String, dynamic> urlParams = request.params;
       final Map<String, dynamic> queryParams = request.url.queryParameters;
       final Map<String, dynamic> bodyParams = await _bodyParams(request);
       final Map<String, dynamic> params = {...urlParams, ...queryParams, ...bodyParams};
 
-      TransformJWTPayload? tokenPayload;
-      if (handler.checkToken) {
-        final String token = request.headers["Authorization"] ?? request.url.queryParameters["token"] ?? "";
-        TransformEither<Exception, TransformJWTPayload> decodedToken = handler.decodeToken(token);
-        if (decodedToken.isLeft) return Response.forbidden("Invalid token: ${decodedToken.left}");
-        tokenPayload = decodedToken.right;
-      }
+      final checkToken = handler.checkToken(request);
+      if (checkToken.isLeft) return Response.forbidden("Invalid token: ${checkToken.left}");
+      TransformJWTPayload tokenPayload = checkToken.right;
 
       final I input = handler.inputFromParams(params);
-      final TransformRouteHandlerInputs<I> handlerInputs = TransformRouteHandlerInputs(params: input, tokenPayload: tokenPayload ?? TransformJWTPayload.empty());
+      final TransformRouteHandlerInputs<I> handlerInputs = TransformRouteHandlerInputs(params: input, tokenPayload: tokenPayload);
       return Isolate.run(() => handler.handler(handlerInputs)).then((value) => value.toResponse());
     } catch (e) {
       return Response.internalServerError(body: e.toString());
@@ -79,4 +78,67 @@ abstract class TransformRoute<I extends TransformRouteInput, O extends Transform
   }
 
   addToRouter(Router router) => router.add(method.toString(), path, _handleRequest);
+}
+
+class TransformRouteLimiterParams {
+  final int maxRequests;
+  final int timeFrameInSeconds;
+
+  TransformRouteLimiterParams({required this.maxRequests, required this.timeFrameInSeconds});
+
+  factory TransformRouteLimiterParams.fromEnvironment() {
+    int maxRequests = const int.fromEnvironment('ROUTERLIMITER_MAX_REQUESTS', defaultValue: 10);
+    int timeFrameInSeconds = const int.fromEnvironment('ROUTERLIMITER_TIME_FRAME_IN_SECONDS', defaultValue: 5);
+    return TransformRouteLimiterParams(maxRequests: maxRequests, timeFrameInSeconds: timeFrameInSeconds);
+  }
+
+  factory TransformRouteLimiterParams.fromMap(Map<String, dynamic> map) {
+    int maxRequests = map.valueIntNotNull('ROUTERLIMITER_MAX_REQUESTS', defaultValue: 10);
+    int timeFrameInSeconds = map.valueIntNotNull('ROUTERLIMITER_TIME_FRAME_IN_SECONDS', defaultValue: 5);
+    return TransformRouteLimiterParams(maxRequests: maxRequests, timeFrameInSeconds: timeFrameInSeconds);
+  }
+
+  factory TransformRouteLimiterParams.fromValues({required int maxRequests, required int timeFrameInSeconds}) {
+    return TransformRouteLimiterParams(maxRequests: maxRequests, timeFrameInSeconds: timeFrameInSeconds);
+  }
+}
+
+class TransformRouteLimiter {
+  final TransformRouteLimiterParams params;
+
+  TransformRouteLimiter(this.params);
+
+  Map<String, List<int>> requestHistory = {};
+
+  void addRequest(String ip) {
+    List<int> ipRequests = requestHistory[ip] ?? [];
+    ipRequests.add(DateTime.now().millisecondsSinceEpoch);
+    requestHistory[ip] = ipRequests;
+  }
+
+  bool isIpBlocked(String ip) {
+    cleanUpIp(ip);
+    final ipRequests = requestHistory[ip] ?? [];
+    final response = ipRequests.length > params.maxRequests;
+    if (!response) addRequest(ip);
+    return response;
+  }
+
+  void cleanUpIp(String ip) {
+    List<int> ipRequests = requestHistory[ip] ?? [];
+    if (ipRequests.isEmpty) {
+      requestHistory.remove(ip);
+      return;
+    }
+    int lastMinute = DateTime.now().millisecondsSinceEpoch - params.timeFrameInSeconds * 1000;
+    ipRequests.removeWhere((requestTime) => requestTime < lastMinute);
+    requestHistory[ip] = ipRequests;
+  }
+
+  void cleanUpAll() {
+    for (String ip in requestHistory.keys) {
+      cleanUpIp(ip);
+    }
+    requestHistory.removeWhere((key, value) => value.isEmpty);
+  }
 }

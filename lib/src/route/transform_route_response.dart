@@ -581,7 +581,7 @@ class TransformRouteResponseInternalServerError<O extends TransformRouteOutput> 
   const TransformRouteResponseInternalServerError({required this.exception});
 
   @override
-  Response toResponse() => Response.internalServerError(body: exception.toString());
+  Response toResponse() => Response.internalServerError(body: {"error": exception.toString()});
 }
 
 class TransformRouteResponseNotImplemented<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
@@ -655,37 +655,3 @@ class TransformRouteResponseNetworkAuthenticationRequired<O extends TransformRou
   @override
   Response toResponse() => Response(511, body: {"error": message}.toString());
 }
-
-/*
-class TransformRouteResponseNotFound<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
-  final String? message;
-  const TransformRouteResponseNotFound({required this.message});
-
-  @override
-  Response toResponse() => Response.notFound({"error": message}.toString());
-}
-
-class TransformRouteResponseBadRequest<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
-  final String? message;
-  const TransformRouteResponseBadRequest({required this.message});
-
-  @override
-  Response toResponse() => Response.badRequest(body: message);
-}
-
-class TransformRouteResponseInternalServerError<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
-  final Exception exception;
-  const TransformRouteResponseInternalServerError({required this.exception});
-
-  @override
-  Response toResponse() => Response.internalServerError(body: exception.toString());
-}
-
-class TransformRouteResponseUnauthorized<O extends TransformRouteOutput> extends TransformRouteResponse<O> {
-  final String? message;
-  const TransformRouteResponseUnauthorized({required this.message});
-
-  @override
-  Response toResponse() => Response.unauthorized(message);
-}
-*/

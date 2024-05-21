@@ -7,7 +7,9 @@ abstract class TransformDatabaseSession {
 
   Future<void> get closed;
 
-  Future<TransformEither<Exception, List<Map<String, dynamic>>>> execute(String query, {Map<String, dynamic>? parameters});
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> executeRawQuery(String query, {Map<String, dynamic>? parameters});
+
+  Future<TransformEither<Exception, List<Map<String, dynamic>>>> executePreparedSql(TransformDatabasePreparedSql preparedSql) => executeRawQuery(preparedSql.sql, parameters: preparedSql.parameters);
 
   Future<void> rollback();
 

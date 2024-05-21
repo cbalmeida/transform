@@ -29,11 +29,15 @@ class TransformDatabaseColumn {
   String toString() => name;
 
   String asSql(TransformDatabaseType databaseType) {
-    return "$name ${type.asSql(databaseType)} ${isNullable ? 'null' : 'not null'} ${defaultValue != null ? 'default ${sqlDefaultValue(databaseType)}' : ''}";
+    String type = this.type.asSql(databaseType);
+    String nullable = isNullable ? 'null' : 'not null';
+    String defaultValue = this.defaultValue != null ? 'default ${sqlDefaultValue(databaseType)}' : '';
+    return "$name $type $nullable $defaultValue";
   }
 
   String asSqlNullable(TransformDatabaseType databaseType) {
-    return "$name ${type.asSql(databaseType)} null ";
+    String type = this.type.asSql(databaseType);
+    return "$name $type null ";
   }
 
   String sqlDefaultValue(TransformDatabaseType databaseType) => type.sqlDefaultValue(databaseType, defaultValue);

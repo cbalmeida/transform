@@ -1,52 +1,61 @@
 part of 'transform_database_query_builder.dart';
 
 class TransformDatabaseQueryBuilderInsert<S> extends TransformDatabaseQueryBuilder<S> {
-  final TransformModelAdapter<S> adapter;
+  TransformDatabaseQueryBuilderInsert(super.adapter);
 
-  TransformDatabaseQueryBuilderInsert(this.adapter);
-
-  TransformDatabaseTable? _table;
-  TransformDatabaseQueryBuilderInsert into(TransformDatabaseTable table) {
-    _table = table;
+  TransformDatabaseTable? _into;
+  TransformDatabaseQueryBuilderInsert<S> into(TransformDatabaseTable table) {
+    _into = table;
     return this;
   }
 
-  List<TransformDatabaseColumn>? _columns;
-
-  List<S>? _values;
-  TransformDatabaseQueryBuilderInsert values(List<S> values) {
+  S? _values;
+  TransformDatabaseQueryBuilderInsert<S> values(S values) {
     _values = values;
     return this;
   }
 
-  @override
-  String asSql(TransformDatabaseType databaseType) {
-    List<String> columns = _columns?.map((e) => e.name).toList() ?? _table?.columns.map((e) => e.name).toList() ?? [];
-    String tableName = _table?.sql ?? "";
-    String columnsSql = (columns).join(", ");
-    String valuesSql = columns.map((e) => "@$e").join(", ");
-    String sql = "insert into $tableName ($columnsSql) values ($valuesSql) returning *";
-    return sql;
+  bool _onConflictDoNothing = false;
+  TransformDatabaseQueryBuilderInsert<S> onConflictDoNothing() {
+    _onConflictDoNothing = true;
+    return this;
   }
 
-  Future<TransformEither<Exception, List<S>>> execute(TransformDatabaseSession session) async {
-    if ((_values ?? []).isEmpty) throw Exception("You must call values() before calling execute()");
-    List<S> resultValues = [];
-    for (S value in _values!) {
-      Map<String, dynamic> objectValue = adapter.toMap(value);
-      objectValue.removeWhere((key, value) => value == null);
-      _columns = [];
-      for (TransformDatabaseColumn column in _table!.columns) {
-        if (objectValue.containsKey(column.name)) {
-          _columns!.add(column);
-        }
-      }
+  @override
+  TransformDatabasePreparedSql prepareSql(TransformDatabaseType databaseType) {
+    if (_into == null) throw Exception("You must call into() before calling prepareSql() or execute()");
+    if (_values == null) throw Exception("You must call values() before calling prepareSql() or execute()");
 
-      String sql = asSql(session.databaseType);
-      final result = await session.execute(sql, parameters: objectValue);
-      if (result.isLeft) return Left(result.left);
-      resultValues.add(adapter.fromMap(result.right.first));
+    TransformDatabasePreparedSql preparedSql = TransformDatabasePreparedSql(databaseType);
+    preparedSql.addSql("insert into ${_into!.sql}");
+
+    Map<String, dynamic> parameters = adapter.toMap(_values as S).withEncodedValues();
+    parameters.removeWhere((key, value) => value == null);
+
+    String columnsSql = parameters.keys.join(", ");
+    preparedSql.addNewLine();
+    preparedSql.addSql("( $columnsSql )");
+
+    preparedSql.addNewLine();
+    preparedSql.addSql("values");
+    preparedSql.addNewLine();
+    preparedSql.addSql("( ");
+    List<String> columns = parameters.keys.toList();
+    for (String column in columns) {
+      preparedSql.addParam(parameters[column]);
+      if (column != columns.last) preparedSql.addSql(", ");
     }
-    return Right(resultValues);
+    preparedSql.addNewLine();
+    preparedSql.addSql(" )");
+
+    if (_onConflictDoNothing) {
+      preparedSql.addNewLine();
+      preparedSql.addSql(" on conflict do nothing");
+    }
+
+    preparedSql.addNewLine();
+    preparedSql.addSql("returning *");
+
+    return preparedSql;
   }
 }

@@ -1,9 +1,7 @@
 part of 'transform_database_query_builder.dart';
 
 class TransformDatabaseQueryBuilderRaw<S> extends TransformDatabaseQueryBuilder<S> {
-  final TransformModelAdapter<S> adapter;
-
-  TransformDatabaseQueryBuilderRaw(this.adapter);
+  TransformDatabaseQueryBuilderRaw(super.adapter);
 
   String? _sql;
 
@@ -13,13 +11,10 @@ class TransformDatabaseQueryBuilderRaw<S> extends TransformDatabaseQueryBuilder<
   }
 
   @override
-  String asSql(TransformDatabaseType databaseType) {
-    return _sql ?? "";
-  }
-
-  Future<TransformEither<Exception, List<S>>> execute(TransformDatabaseSession session) async {
-    String sql = asSql(session.databaseType);
-    TransformEither<Exception, List<Map<String, dynamic>>> result = await session.execute(sql);
-    return result.fold((left) => Left(result.left), (right) => Right(right.map((e) => adapter.fromMap(e)).toList()));
+  TransformDatabasePreparedSql prepareSql(TransformDatabaseType databaseType) {
+    if (_sql == null) throw Exception("You must call sql() before calling prepareSql() or execute()");
+    TransformDatabasePreparedSql preparedSql = TransformDatabasePreparedSql(databaseType);
+    preparedSql.addSql(_sql!);
+    return preparedSql;
   }
 }

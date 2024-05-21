@@ -1,11 +1,11 @@
 import 'package:testeexemplo/generated/generated.dart';
 import 'package:transform/transform.dart';
 
-class Objects {
-  static List<TransformObject> get objects => TransformObject.objects;
+class Objects extends TransformObjects {
+  @override
+  void createObjects(TransformInjector injector) {
+    objects = [];
 
-  static void register(TransformInjector injector) {
-    injector.addInstance<ProdutoObject>(ProdutoObject());
-    injector.addInstance<UserObject>(UserObject());
+    objects.add(injector.addInstance<ProdutoObject>(ProdutoObject()));
   }
 }

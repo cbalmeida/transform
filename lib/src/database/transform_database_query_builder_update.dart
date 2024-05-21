@@ -1,56 +1,77 @@
 part of 'transform_database_query_builder.dart';
 
 class TransformDatabaseQueryBuilderUpdate<S> extends TransformDatabaseQueryBuilder<S> {
-  final TransformModelAdapter<S> adapter;
+  TransformDatabaseQueryBuilderUpdate(super.adapter);
 
-  TransformDatabaseQueryBuilderUpdate(this.adapter);
+  Map<String, dynamic>? _set;
 
-  Map<String, dynamic>? _values;
-
-  TransformDatabaseQueryBuilderUpdate set(Map<String, dynamic> values) {
-    _values = values;
+  TransformDatabaseQueryBuilderUpdate<S> setValue(S value) {
+    if (_into == null) throw Exception("You must call into() before calling setValue()");
+    _set = adapter.toMap(value).withEncodedValues();
+    List<TransformDatabaseColumn> primaryKeyColumns = _into!.primaryKeyColumns;
+    if (primaryKeyColumns.isEmpty) throw Exception("Primary key columns not found!");
+    where(primaryKeyColumns.first.equals(_set![primaryKeyColumns.first.name]));
+    for (TransformDatabaseColumn column in primaryKeyColumns.skip(1)) {
+      and(column.equals(_set![column.name]));
+    }
     return this;
   }
 
-  TransformDatabaseTable? _table;
+  TransformDatabaseQueryBuilderUpdate<S> set(Map<String, dynamic> values) {
+    _set = values.withEncodedValues();
+    return this;
+  }
 
-  TransformDatabaseQueryBuilderUpdate table(TransformDatabaseTable table) {
-    _table = table;
+  TransformDatabaseTable? _into;
+
+  TransformDatabaseQueryBuilderUpdate<S> into(TransformDatabaseTable table) {
+    _into = table;
     return this;
   }
 
   TransformDatabaseQueryBuilderWhere? _where;
 
-  TransformDatabaseQueryBuilderUpdate where(TransformDatabaseQueryBuilderCondition condition) {
+  TransformDatabaseQueryBuilderUpdate<S> where(TransformDatabaseQueryBuilderCondition condition) {
     _where = TransformDatabaseQueryBuilderWhere.where(condition);
     return this;
   }
 
-  TransformDatabaseQueryBuilderUpdate and(TransformDatabaseQueryBuilderCondition condition) {
+  TransformDatabaseQueryBuilderUpdate<S> and(TransformDatabaseQueryBuilderCondition condition) {
     if (_where == null) throw Exception("You must call where() before calling and()");
     _where = _where!.and(condition);
     return this;
   }
 
-  TransformDatabaseQueryBuilderUpdate or(TransformDatabaseQueryBuilderCondition condition) {
+  TransformDatabaseQueryBuilderUpdate<S> or(TransformDatabaseQueryBuilderCondition condition) {
     if (_where == null) throw Exception("You must call where() before calling or()");
     _where = _where!.or(condition);
     return this;
   }
 
   @override
-  String asSql(TransformDatabaseType databaseType) {
-    String tableSql = _table?.sql ?? "";
-    List<String> values = _values!.entries.map((e) => "${e.key} = ${e.value}").toList();
-    String setSql = values.join(", ");
-    String whereSql = _where == null ? "" : "where ${_where!.sql}";
-    String sql = "update $tableSql \n set $setSql \n $whereSql";
-    return sql;
-  }
+  TransformDatabasePreparedSql prepareSql(TransformDatabaseType databaseType) {
+    if (_into == null) throw Exception("You must call into() before calling prepareSql() or execute()");
+    if (_set == null) throw Exception("You must call set() before calling prepareSql() or execute()");
+    if (_where == null) throw Exception("You must call where() before calling prepareSql() or execute()");
 
-  Future<TransformEither<Exception, List<S>>> execute(TransformDatabaseSession session) async {
-    String sql = asSql(session.databaseType);
-    TransformEither<Exception, List<Map<String, dynamic>>> result = await session.execute(sql);
-    return result.fold((left) => Left(result.left), (right) => Right(right.map((e) => adapter.fromMap(e)).toList()));
+    TransformDatabasePreparedSql preparedSql = TransformDatabasePreparedSql(databaseType);
+    preparedSql.addSql("update ${_into!.sql}");
+    preparedSql.addNewLine();
+    preparedSql.addSql("set ");
+    for (String key in _set!.keys) {
+      preparedSql.addNewLine();
+      preparedSql.addSql("$key = ");
+      preparedSql.addParam(_set![key]);
+      if (key != _set!.keys.last) {
+        preparedSql.addSql(", ");
+      }
+    }
+
+    _where!.prepareSql(preparedSql);
+
+    preparedSql.addNewLine();
+    preparedSql.addSql("returning *");
+
+    return preparedSql;
   }
 }

@@ -11,7 +11,10 @@ class TransformInjector {
 
   void add<T>(Function constructor) => _autoInjector.add<T>(constructor);
 
-  void addInstance<T>(T instance) => _autoInjector.addInstance<T>(instance);
+  T addInstance<T>(T instance) {
+    _autoInjector.addInstance<T>(instance);
+    return instance;
+  }
 
   void addSingleton<T>(Function constructor) => _autoInjector.addSingleton<T>(constructor);
 

@@ -10,4 +10,8 @@ class DateTimeUtil {
     if (value is DateTime) return value;
     return DateTime.tryParse(value.toString()) ?? defaultValue;
   }
+
+  static String encode(DateTime value) {
+    return value.toIso8601String();
+  }
 }

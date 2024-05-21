@@ -1,9 +1,7 @@
 part of 'transform_database_query_builder.dart';
 
 class TransformDatabaseQueryBuilderDelete<S> extends TransformDatabaseQueryBuilder<S> {
-  final TransformModelAdapter<S> adapter;
-
-  TransformDatabaseQueryBuilderDelete(this.adapter);
+  TransformDatabaseQueryBuilderDelete(super.adapter);
 
   TransformDatabaseTable? _from;
 
@@ -32,16 +30,15 @@ class TransformDatabaseQueryBuilderDelete<S> extends TransformDatabaseQueryBuild
   }
 
   @override
-  String asSql(TransformDatabaseType databaseType) {
-    String fromSql = _from == null ? "" : "from ${_from!.sql}";
-    String whereSql = _where == null ? "" : "where ${_where!.sql}";
-    String sql = "delete  \n  $fromSql  \n  $whereSql ";
-    return sql;
-  }
+  TransformDatabasePreparedSql prepareSql(TransformDatabaseType databaseType) {
+    if (_from == null) throw Exception("You must call from() before calling prepareSql() or execute()");
 
-  Future<TransformEither<Exception, List<S>>> execute(TransformDatabaseSession session) async {
-    String sql = asSql(session.databaseType);
-    TransformEither<Exception, List<Map<String, dynamic>>> result = await session.execute(sql);
-    return result.fold((left) => Left(result.left), (right) => Right(right.map((e) => adapter.fromMap(e)).toList()));
+    TransformDatabasePreparedSql preparedSql = TransformDatabasePreparedSql(databaseType);
+    preparedSql.addSql("delete from ${_from!.sql}");
+    _where?.prepareSql(preparedSql);
+    preparedSql.addNewLine();
+    preparedSql.addSql("returning *");
+
+    return preparedSql;
   }
 }

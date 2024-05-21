@@ -32,14 +32,6 @@ abstract class TransformModel {
     }
   }
 
-  TransformDatabaseTable get databaseTable => TransformDatabaseTable(
-        name: name,
-        schema: schema,
-        columns: columns.map((e) => e.databaseColumn).toList(),
-        indexes: indexes.map((e) => e.databaseIndex).toList(),
-        initialData: initialData,
-      );
-
   List<TransformModelColumn> get primaryKeyColumns => columns.where((element) => element.isPrimaryKey).toList();
 
   TransformDatabaseColumn columnByName(String name) {

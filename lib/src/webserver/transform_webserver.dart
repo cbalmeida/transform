@@ -14,12 +14,14 @@ class TransformWebServerParams {
   factory TransformWebServerParams.fromEnvironment() {
     String host = const String.fromEnvironment('WEBSERVER_HOST', defaultValue: 'localhost');
     int port = const int.fromEnvironment('WEBSERVER_PORT', defaultValue: 8080);
+    String url = const String.fromEnvironment('WEBSERVER_URL', defaultValue: 'localhost');
     return TransformWebServerParams(host: host, port: port);
   }
 
   factory TransformWebServerParams.fromMap(Map<String, dynamic> map) {
-    String host = Util.stringFromMapNotNull(map, 'WEBSERVER_HOST', 'localhost');
-    int port = Util.intFromMapNotNull(map, 'WEBSERVER_PORT', 8080);
+    String host = map.valueStringNotNull('WEBSERVER_HOST', defaultValue: 'localhost');
+    int port = map.valueIntNotNull('WEBSERVER_PORT', defaultValue: 8080);
+    String url = map.valueStringNotNull('WEBSERVER_URL', defaultValue: 'localhost');
     return TransformWebServerParams(host: host, port: port);
   }
 
@@ -28,33 +30,55 @@ class TransformWebServerParams {
   }
 }
 
-abstract class TransformWebServer {
-  final List<TransformApi> apis;
+class TransformWebServer {
+  // final List<TransformRoute> auth;
   final TransformWebServerParams params;
+  final List<TransformRoutes> apis;
 
-  TransformWebServer({required this.apis, required this.params});
+  TransformWebServer({required this.params, required this.apis});
 
-  HttpServer? _httpServer;
-
-  Future<TransformEither<Exception, bool>> start() async {
+  Future<TransformEither<Exception, bool>> start(TransformInjector injector) async {
     try {
       final router = Router();
-      for (TransformApi api in apis) {
-        String apiPath = '/api/v${api.version}';
-        Util.log("  Registering API version ${api.version}...");
-        router.mount(apiPath, api.router.call);
+
+      for (TransformRoutes api in apis) {
+        String apiPath = api.path; // '/api/v${api.version}';
+        Util.log("  Registering routes at: $apiPath");
+        router.mount(apiPath, api.router(injector).call);
         for (TransformRoute route in api.routes) {
-          Util.log("    Route registered: $apiPath${route.path} [${route.method}]");
+          Util.log("    $apiPath${route.path} [${route.method}]");
         }
       }
 
-      TransformWebServerParams params = await this.params;
-      _httpServer = await shelf_io.serve(router.call, params.host, params.port);
+      // Bind with a secure HTTPS connection
+      SecurityContext getSecurityContext() {
+        final chain = Platform.script.resolve('certificates/server_chain.pem').toFilePath();
+        final key = Platform.script.resolve('certificates/server_key.pem').toFilePath();
+
+        return SecurityContext()
+          ..useCertificateChain(chain)
+          ..usePrivateKey(key, password: 'dartdart');
+      }
+
+      TransformWebServerParams params = this.params;
+      await shelf_io.serve(router.call, params.host, params.port, securityContext: _securityContext);
       Util.log("  Webserver service is listening: ${params.host}:${params.port}");
 
       return Right(true);
     } on Exception catch (e) {
       return Left(Exception("Error starting Webserver layer:\n$e"));
     }
+  }
+
+  SecurityContext? get _securityContext {
+    /*
+    final chain = Platform.script.resolve('certificates/server_chain.pem').toFilePath();
+    final key = Platform.script.resolve('certificates/server_key.pem').toFilePath();
+
+    return SecurityContext()
+      ..useCertificateChain(chain)
+      ..usePrivateKey(key, password: 'dartdart');
+     */
+    return null;
   }
 }

@@ -1,3 +1,5 @@
+import '../../transform.dart';
+
 abstract class TransformModelAdapter<S> {
   S fromMap(Map<String, dynamic> map);
 
@@ -8,12 +10,11 @@ abstract class TransformModelAdapter<S> {
 
 class TransformModelAdapterCount extends TransformModelAdapter<int> {
   @override
-  int fromMap(Map<String, dynamic> map) {
-    return map['count'];
-  }
+  int fromMap(Map<String, dynamic> map) => map['count'];
 
   @override
-  Map<String, dynamic> toMap(int model) {
-    return {'count': model};
-  }
+  Map<String, dynamic> toMap(int model) => {'count': model};
+
+  @override
+  Map<String, TransformEncodable> toMapEncoded(int model) => {'count': TransformEncodable.fromObject(model)};
 }

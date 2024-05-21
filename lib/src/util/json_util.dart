@@ -22,4 +22,8 @@ class JsonUtil {
       return defaultValue;
     }
   }
+
+  static String encodeAsJsonErrorMessage(String message) {
+    return jsonEncode({"error": message});
+  }
 }

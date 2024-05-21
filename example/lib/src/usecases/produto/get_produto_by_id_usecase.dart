@@ -5,12 +5,12 @@ import '../../../generated/generated.dart';
 class GetProdutoByIdUseCase extends TransformUseCase<User> {
   final ProdutoObject produtoObject;
 
-  GetProdutoByIdUseCase({required this.produtoObject, required super.databaseParams});
+  GetProdutoByIdUseCase({required this.produtoObject, required super.params});
 
   @override
   Future<TransformEither<Exception, Produto?>> call({required String id}) {
-    return database.transaction<Produto?>((session) async {
-      final select = produtoObject.select.wherePrimaryKey({"id": id});
+    return database.transaction<Exception, Produto?>((session) async {
+      final select = produtoObject.databaseTable.select.where(produtoObject.databaseTable.columnByName('id').equals(id));
       final TransformEither<Exception, List<Produto>> result = await select.execute(session);
       if (result.isLeft) {
         await session.rollback();

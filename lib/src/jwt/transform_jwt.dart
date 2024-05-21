@@ -10,7 +10,7 @@ abstract class TransformJWT {
 
   TransformJWTAlgorithm get algorithm;
 
-  TransformEither<Exception, String> generateToken(String userId, String password) {
+  TransformEither<Exception, String> generateToken(String userId) {
     TransformJWTPayload payload = TransformJWTPayload(userId: userId);
     final jwt = JWT(payload.toMap(), issuer: params.issuer);
     String result = algorithm.sign(jwt, expiresInSeconds: params.expiresInSeconds);
